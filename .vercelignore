@@ -1,0 +1,11 @@
+.env*
+!.env.example
+**/.env*
+*.db
+*.db-journal
+node_modules
+**/node_modules
+.next
+**/.next
+.vercel
+reference

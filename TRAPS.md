@@ -14,3 +14,5 @@ Read this at the start of every session. Add a line whenever something bites, an
 | The live model recommended tests from symptoms ("fever" became malaria + typhoid) even though the prompt forbade it | Enforce safety rules on model output in code (isTestMentioned), not only in the prompt |
 | "Grounding with Google Maps" returned an empty 404 on generateContent | Maps grounding needs the Interactions API (`/v1beta/interactions`, tool `{type:"google_maps"}`) |
 | Two agents editing the same working folder | Each agent uses its own clone or worktree. Never share a working tree |
+| Local dev and production share one Neon database | Running `db:seed` locally wipes the live demo data. Reseed only on purpose |
+| Neon was briefly unreachable from Prisma (about 10 minutes) while node-postgres could still connect | Retry before debugging config. Batch seed inserts (createMany) so the pooler does not drop long runs |

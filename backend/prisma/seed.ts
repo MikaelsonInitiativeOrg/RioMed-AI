@@ -93,13 +93,12 @@ async function main() {
     });
     if (!spec.partner) continue;
 
-    for (const code of spec.tests ?? []) {
-      const base = PRICES_NAIRA[code];
-      const price = Math.round((base * (0.85 + rnd() * 0.3)) / 100) * 100;
-      await prisma.facilityTest.create({
-        data: { facilityId: id, testCode: code, priceKobo: price * 100, turnaroundHours: 4 + Math.floor(rnd() * 44) },
-      });
-    }
+    await prisma.facilityTest.createMany({
+      data: (spec.tests ?? []).map((code) => {
+        const price = Math.round((PRICES_NAIRA[code] * (0.85 + rnd() * 0.3)) / 100) * 100;
+        return { facilityId: id, testCode: code, priceKobo: price * 100, turnaroundHours: 4 + Math.floor(rnd() * 44) };
+      }),
+    });
 
     const slots = [];
     for (let day = 0; day < 10; day++) {

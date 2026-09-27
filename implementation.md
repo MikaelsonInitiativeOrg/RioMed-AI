@@ -35,7 +35,7 @@ The whole demo journey works locally: prompt → validated intent → ranked fac
 
 ### TODO-001: Hosted demo
 PRD: 15.1
-Status: blocked (needs a Neon or Supabase `DATABASE_URL` and a Vercel project from the owner)
+Status: done 2026-09-27 12:30. https://riomed-ai.vercel.app (Vercel team mikaelson-initiative-orgs-projects; Neon Postgres, us-east-1). Deployed from branch core/accounts with `vercel deploy --prod`; not yet connected to git auto-deploys
 Tasks:
 - [ ] Switch the `prisma/schema.prisma` provider to `postgresql`, then `db push` and seed against Neon
 - [ ] Set Vercel env: `DATABASE_URL`, `SESSION_SECRET`, `AI_*`, `PAYSTACK_SECRET_KEY` (test), `APP_URL`
@@ -87,6 +87,6 @@ Least confident about:
 
 - NFR-001: the LLM parse measured p95 1.24 s with sequential requests. It has not been measured under concurrent load. The timeout is 2 s (AI_TIMEOUT_MS).
 - Paystack checkout, webhook and refund against the real test API.
-- Behaviour on Postgres under concurrency (SQLite only so far).
+- Postgres concurrency is now tested on Neon. 10 concurrent holds on a 2-place slot gave exactly 2 successes and no overbooking. Only one run, from a single machine.
 - The emergency red-flag list has not been clinically reviewed.
 - UI on real low-end Android devices and slow networks (NFR-002).
