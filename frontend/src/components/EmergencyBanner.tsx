@@ -36,7 +36,7 @@ export function EmergencyBanner({ matched }: { matched: string[] }) {
         <p>
           We showed this because your message {phrases.length ? <>mentioned: <span className="font-semibold text-white">{phrases.join(", ")}</span></> : "sounded like a possible emergency"}. Hospitals nearby are listed below.
         </p>
-        <p className="font-bold text-white text-[11px]">
+        <p className="font-bold text-white text-xs">
           {RED_FLAG_STATUS === "draft-pending-clinician-review"
             ? "Draft red-flag list — pending clinician review"
             : "✓ Red-flag list reviewed by clinician"}

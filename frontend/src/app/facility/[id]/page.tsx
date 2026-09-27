@@ -51,11 +51,11 @@ export default async function FacilityPage(props: PageProps<"/facility/[id]">) {
                 {facility.name}
               </h1>
               {facility.isPartner ? (
-                <span className="inline-flex items-center rounded-full bg-[#0E6B5C] px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                <span className="inline-flex items-center rounded-full bg-[#0E6B5C] px-2.5 py-0.5 text-xs font-bold text-white uppercase tracking-wider">
                   PARTNER CLINIC
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-full border border-[#E3E0D6] bg-[#F7F5F0] px-2.5 py-0.5 text-[10px] font-semibold text-[#4B6560]">
+                <span className="inline-flex items-center rounded-full border border-[#E3E0D6] bg-[#F7F5F0] px-2.5 py-0.5 text-xs font-semibold text-[#4B6560]">
                   Registry Listed
                 </span>
               )}
@@ -69,10 +69,10 @@ export default async function FacilityPage(props: PageProps<"/facility/[id]">) {
 
         <div className="pt-2 border-t border-[#F0EEE7] flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1 rounded-full border border-[#0E6B5C] bg-[#F3FAF8] px-2.5 py-0.5 text-[11px] font-semibold text-[#0A5347]">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#0E6B5C] bg-[#F3FAF8] px-2.5 py-0.5 text-xs font-semibold text-[#0A5347]">
               ✓ Registry verified
             </span>
-            <span className="text-[11px] text-[#8B9490]">
+            <span className="text-xs text-[#8B9490]">
               NHFR {facility.nhfrId ?? "verified"} · synced {facility.sourceSyncedAt.toISOString().slice(0, 10)}
             </span>
           </div>
@@ -81,7 +81,7 @@ export default async function FacilityPage(props: PageProps<"/facility/[id]">) {
             {facility.phone && (
               <a
                 href={`tel:${facility.phone.replace(/\s/g, "")}`}
-                className="inline-flex min-h-[38px] items-center rounded-xl border border-[#0E6B5C] px-3.5 py-1 text-xs font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] transition"
+                className="inline-flex min-h-[44px] items-center rounded-xl border border-[#0E6B5C] px-3.5 py-1 text-sm font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] transition"
               >
                 Call {facility.phone}
               </a>

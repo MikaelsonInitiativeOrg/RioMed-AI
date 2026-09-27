@@ -85,7 +85,7 @@ export function FacilityBookingFlow({
                   {formatNaira(t.priceKobo)}
                 </span>
               </div>
-              <p className="text-[11px] text-[#4B6560] mt-0.5">
+              <p className="text-xs text-[#4B6560] mt-0.5">
                 Results ready in ~{t.turnaroundHours} hours
               </p>
             </button>
@@ -114,7 +114,7 @@ export function FacilityBookingFlow({
                     const firstAvail = sList.find((s) => s.remaining > 0);
                     if (firstAvail) setSelectedSlotId(firstAvail.id);
                   }}
-                  className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-heading font-bold whitespace-nowrap transition border ${
+                  className={`min-h-[44px] px-3.5 py-1.5 rounded-xl text-xs font-heading font-bold whitespace-nowrap transition border ${
                     selectedDayKey === k
                       ? "bg-[#0A5347] text-white border-[#0A5347] shadow-xs"
                       : "bg-[#F7F5F0] text-[#4B6560] border-[#E3E0D6] hover:bg-[#F3FAF8]"
@@ -208,7 +208,7 @@ export function FacilityBookingFlow({
             </button>
           </form>
 
-          <p className="text-center text-[11px] text-[#8B9490]">
+          <p className="text-center text-xs text-[#8B9490]">
             🔒 Slots are held exclusively for 15 minutes while payment is verified.
           </p>
         </section>

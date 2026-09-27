@@ -33,11 +33,11 @@ export function FacilityCard({ facility: r, testCode, window }: FacilityCardProp
 
         <div>
           {r.isPartner ? (
-            <span className="inline-flex items-center rounded-full bg-[#0E6B5C] px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
+            <span className="inline-flex items-center rounded-full bg-[#0E6B5C] px-2.5 py-0.5 text-xs font-bold tracking-wider text-white uppercase">
               PARTNER
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-full border border-[#E3E0D6] bg-[#F7F5F0] px-2.5 py-0.5 text-[10px] font-semibold text-[#4B6560]">
+            <span className="inline-flex items-center rounded-full border border-[#E3E0D6] bg-[#F7F5F0] px-2.5 py-0.5 text-xs font-semibold text-[#4B6560]">
               Listed only
             </span>
           )}
@@ -46,10 +46,10 @@ export function FacilityCard({ facility: r, testCode, window }: FacilityCardProp
 
       {/* Registry Verification Line */}
       <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-        <span className="inline-flex items-center gap-1 rounded-full border border-[#0E6B5C] bg-[#F3FAF8] px-2.5 py-0.5 text-[11px] font-semibold text-[#0A5347]">
-          ✓ Registry verified
+        <span className="inline-flex items-center gap-1 rounded-full border border-[#8B9490]/50 bg-[#F7F5F0] px-2.5 py-0.5 text-xs font-semibold text-[#0A5347]">
+          Registry record (demo)
         </span>
-        <span className="text-[11px] text-[#8B9490]">
+        <span className="text-xs text-[#8B9490]">
           NHFR record {r.nhfrId ?? "none"} · <span className="font-medium text-[#4B6560]">demo data</span>
         </span>
       </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FacilityShell } from "@/components/FacilityShell";
 import { redirect } from "next/navigation";
 import { getTest } from "@riomed/backend/core/catalog";
 import { checkInAction } from "@/app/actions";
@@ -47,134 +48,7 @@ export default async function StaffPage(props: PageProps<"/staff">) {
         </div>
       )}
 
-      {/* BROWSER WINDOW WRAPPER (Matching app.riomed.ai/facility/schedule) */}
-      <div className="rounded-2xl border border-[#202124] overflow-hidden shadow-2xl bg-[#202124]">
-        {/* macOS Chrome Browser Tab Bar & Controls */}
-        <div className="flex items-center h-10 px-3 bg-[#202124] text-[#e8eaed] text-xs select-none">
-          {/* Traffic lights */}
-          <div className="flex items-center gap-2 pr-3">
-            <span className="w-3 h-3 rounded-full bg-[#ff5f57] inline-block" />
-            <span className="w-3 h-3 rounded-full bg-[#febc2e] inline-block" />
-            <span className="w-3 h-3 rounded-full bg-[#28c840] inline-block" />
-          </div>
-
-          {/* Active Tab */}
-          <div className="flex items-center gap-2 bg-[#35363a] px-3.5 py-1.5 rounded-t-lg text-xs font-medium text-[#e8eaed] border-t border-[#4B6560]/40 max-w-[200px]">
-            <span className="w-2 h-2 rounded-full bg-[#8FE0CE]" />
-            <span className="truncate">app.riomed.ai/facility</span>
-          </div>
-        </div>
-
-        {/* Browser URL Toolbar */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-[#35363a] border-b border-[#202124]">
-          <div className="flex items-center gap-1.5 text-[#9aa0a6] text-xs">
-            <span className="hover:text-white cursor-pointer px-1">‹</span>
-            <span className="hover:text-white cursor-pointer px-1">›</span>
-            <span className="hover:text-white cursor-pointer px-1">↻</span>
-          </div>
-
-          {/* Address Bar */}
-          <div className="flex-1 flex items-center gap-2 bg-[#282a2d] px-3 py-1 rounded-full text-xs text-[#e8eaed] font-mono mx-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-[#8FE0CE] shrink-0">
-              <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="2" />
-              <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="2" />
-            </svg>
-            <span className="text-[#9aa0a6]">https://</span>
-            <span className="text-white">app.riomed.ai/facility/schedule</span>
-          </div>
-        </div>
-
-        {/* BROWSER INTERIOR: SIDEBAR + MAIN CONTENT */}
-        <div className="flex flex-col md:flex-row min-h-[580px] bg-[#F7F5F0]">
-          {/* Left Dark Teal Sidebar */}
-          <aside className="w-full md:w-[220px] bg-[#0A5347] text-[#F3FAF8] p-5 flex flex-col justify-between shrink-0">
-            <div className="space-y-6">
-              {/* Facility Brand Header */}
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-[#0E6B5C] flex items-center justify-center shrink-0">
-                  <svg width="18" height="18" viewBox="0 0 48 48">
-                    <path
-                      d="M9 25h6l3-9 5 17 4-14 3 6h9"
-                      stroke="#F3FAF8"
-                      strokeWidth="3.4"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="37" cy="25" r="4.4" fill="#8FE0CE" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <h2 className="font-heading font-bold text-sm text-white truncate">
-                    {facility?.name ?? "Grace Diagnostics"}
-                  </h2>
-                  <p className="text-[10px] text-[#CDE8E1] truncate">
-                    Lagos Desk · Active
-                  </p>
-                </div>
-              </div>
-
-              {/* Navigation Menu */}
-              <nav aria-label="Facility Navigation" className="space-y-1">
-                <Link
-                  href="/staff"
-                  className="flex items-center gap-2 bg-white/12 text-white font-heading font-bold text-xs rounded-lg px-3 py-2 transition"
-                >
-                  <span className="text-[#8FE0CE]">📅</span>
-                  <span>Today&apos;s schedule</span>
-                </Link>
-
-                <a
-                  href="#search"
-                  className="flex items-center gap-2 text-[#CDE8E1] hover:text-white hover:bg-white/5 text-xs rounded-lg px-3 py-2 transition"
-                >
-                  <span>🔍</span>
-                  <span>Bookings search</span>
-                </a>
-
-                <a
-                  href="#results"
-                  className="flex items-center gap-2 text-[#CDE8E1] hover:text-white hover:bg-white/5 text-xs rounded-lg px-3 py-2 transition"
-                >
-                  <span>📋</span>
-                  <span>Results</span>
-                </a>
-
-                <Link
-                  href="/staff/catalogue"
-                  className="flex items-center gap-2 text-[#CDE8E1] hover:text-white hover:bg-white/5 text-xs rounded-lg px-3 py-2 transition"
-                >
-                  <span>🏷️</span>
-                  <span>Catalogue &amp; prices</span>
-                </Link>
-
-                <a
-                  href="#staff"
-                  className="flex items-center gap-2 text-[#CDE8E1] hover:text-white hover:bg-white/5 text-xs rounded-lg px-3 py-2 transition"
-                >
-                  <span>👥</span>
-                  <span>Staff</span>
-                </a>
-              </nav>
-            </div>
-
-            {/* Sidebar Footer */}
-            <div className="pt-6 border-t border-white/10 text-[11px] text-[#CDE8E1] space-y-1">
-              <p>Operator: {actor.name}</p>
-              <div className="flex gap-2">
-                <Link href="/demo-login?next=/staff" className="underline hover:text-white">
-                  Switch profile
-                </Link>
-                <span>·</span>
-                <Link href="/dashboard" className="underline hover:text-white">
-                  Patient view
-                </Link>
-              </div>
-            </div>
-          </aside>
-
-          {/* Main Schedule Content */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-7 overflow-x-auto">
+      <FacilityShell facilityName={facility?.name ?? "Your facility"} operatorName={actor.name} active="schedule">
             {/* Main Header: Date + Booking Reference Search */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <h1 className="font-heading font-bold text-xl sm:text-2xl text-[#12262B]">
@@ -183,12 +57,12 @@ export default async function StaffPage(props: PageProps<"/staff">) {
 
               {/* Search by booking reference form matching mockup */}
               <form method="get" className="flex items-center gap-2">
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-none">
                   <input
                     name="q"
                     defaultValue={q}
                     placeholder="Search by booking reference"
-                    className="w-full sm:w-64 min-h-[38px] rounded-lg border border-[#E3E0D6] bg-white px-3 py-1.5 text-xs text-[#12262B] placeholder:text-[#4B6560]/70 focus:border-[#0E6B5C] focus:outline-none focus:ring-1 focus:ring-[#0E6B5C]"
+                    className="w-full sm:w-64 min-h-[44px] rounded-lg border border-[#E3E0D6] bg-white px-3 py-1.5 text-xs text-[#12262B] placeholder:text-[#4B6560]/70 focus:border-[#0E6B5C] focus:outline-none focus:ring-1 focus:ring-[#0E6B5C]"
                   />
                   {q && (
                     <Link
@@ -202,7 +76,7 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                 </div>
                 <button
                   type="submit"
-                  className="min-h-[38px] rounded-lg border border-[#0E6B5C] bg-white px-3 py-1.5 text-xs font-heading font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] active:scale-[0.98] transition"
+                  className="min-h-[44px] rounded-lg border border-[#0E6B5C] bg-white px-3 py-1.5 text-xs font-heading font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] active:scale-[0.98] transition"
                 >
                   Find
                 </button>
@@ -224,12 +98,48 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                 />
               </div>
             ) : (
-              /* SCHEDULE TABLE CONTAINER (Exact Layout from Mockup) */
-              <div className="rounded-xl border border-[#E3E0D6] bg-white overflow-hidden shadow-2xs">
-                {/* Desktop Grid Table */}
+              <>
+                {/* Phones and tablets: one card per booking, actions full width */}
+                <ul className="lg:hidden grid gap-3 md:grid-cols-2">
+                  {appts.map((a) => {
+                    const testLabel = getTest(a.testCode)?.name ?? a.testCode;
+                    return (
+                      <li key={a.id} className="rounded-xl border border-[#E3E0D6] bg-white p-4 space-y-3 shadow-2xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-heading font-bold text-base text-[#12262B]">{lagosTimeOnly(a.slotStart)}</span>
+                          <StatusBadge status={a.status} />
+                        </div>
+                        <div>
+                          <p className="font-heading font-semibold text-sm text-[#12262B]">{testLabel}</p>
+                          <p className="font-mono text-sm font-bold text-[#12262B]">{a.reference}</p>
+                          <p className="text-sm text-[#4B6560]">{a.patientName}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {a.status === "CONFIRMED" && (
+                            <form action={checkInAction}>
+                              <input type="hidden" name="appointmentId" value={a.id} />
+                              <button type="submit" className="w-full min-h-[44px] rounded-lg bg-[#0E6B5C] px-4 text-sm font-heading font-bold text-white hover:bg-[#0A5347]">
+                                Check in
+                              </button>
+                            </form>
+                          )}
+                          {["CHECKED_IN", "COMPLETED", "RESULT_AVAILABLE"].includes(a.status) && (
+                            <StaffResultUploader appointmentId={a.id} reference={a.reference} testName={testLabel} resultCount={a.resultCount} />
+                          )}
+                          <Link href={`/appointments/${a.id}`} className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-[#E3E0D6] text-sm font-semibold text-[#0E6B5C]">
+                            Booking details →
+                          </Link>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {/* Laptop and up: table */}
+                <div className="hidden lg:block rounded-xl border border-[#E3E0D6] bg-white overflow-x-auto shadow-2xs">
                 <div className="min-w-[640px]">
                   {/* Table Header Row */}
-                  <div className="grid grid-cols-[90px_1fr_1fr_120px_200px] bg-[#F7F5F0] px-4 py-2.5 text-[11px] font-bold text-[#4B6560] uppercase tracking-wider border-b border-[#E3E0D6]">
+                  <div className="grid grid-cols-[90px_1fr_1fr_120px_200px] bg-[#F7F5F0] px-4 py-2.5 text-xs font-bold text-[#4B6560] uppercase tracking-wider border-b border-[#E3E0D6]">
                     <span>Time</span>
                     <span>Reference</span>
                     <span>Test</span>
@@ -258,7 +168,7 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                             <span className="font-mono font-bold text-[#12262B]">
                               {a.reference}
                             </span>
-                            <span className="block text-[11px] text-[#4B6560]">
+                            <span className="block text-xs text-[#4B6560]">
                               {a.patientName}
                             </span>
                           </div>
@@ -283,7 +193,7 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                                 <input type="hidden" name="appointmentId" value={a.id} />
                                 <button
                                   type="submit"
-                                  className="inline-flex items-center justify-center rounded-md bg-[#0E6B5C] px-3.5 py-1.5 text-xs font-heading font-bold text-white shadow-2xs hover:bg-[#0A5347] active:scale-[0.98] transition"
+                                  className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-[#0E6B5C] px-3.5 py-1.5 text-xs font-heading font-bold text-white shadow-2xs hover:bg-[#0A5347] active:scale-[0.98] transition"
                                 >
                                   Check In
                                 </button>
@@ -310,7 +220,7 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                             {/* View details link */}
                             <Link
                               href={`/appointments/${a.id}`}
-                              className="text-xs font-semibold text-[#0E6B5C] hover:underline ml-auto"
+                              className="inline-flex min-h-[44px] items-center text-xs font-semibold text-[#0E6B5C] hover:underline ml-auto"
                             >
                               Details →
                             </Link>
@@ -321,10 +231,9 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                   </div>
                 </div>
               </div>
+              </>
             )}
-          </main>
-        </div>
-      </div>
+      </FacilityShell>
     </div>
   );
 }

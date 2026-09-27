@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {/* Required Hackathon Demo Banner */}
         <aside
           aria-label="Demo environment status"
-          className="bg-[#FFF4E5] border-b border-[#E3E0D6] text-[#8A6212] text-[10.5px] sm:text-xs text-center px-3 py-1 font-medium"
+          className="bg-[#FFF4E5] border-b border-[#E3E0D6] text-[#8A6212] text-xs text-center px-3 py-1 font-medium"
         >
           <div className="mx-auto max-w-4xl flex items-center justify-center gap-1.5 flex-wrap">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#C98A1D]" aria-hidden="true" />
@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   {user?.role === "patient" && (
                     <Link
                       href="/dashboard"
-                      className="inline-flex min-h-[36px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                      className="inline-flex min-h-[44px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
                     >
                       <span className="sm:hidden">Bookings</span>
                       <span className="hidden sm:inline">My bookings</span>
@@ -83,7 +83,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   {(user?.role === "facility_staff" || user?.role === "facility_admin") && (
                     <Link
                       href="/staff"
-                      className="inline-flex min-h-[36px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                      className="inline-flex min-h-[44px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
                     >
                       <span className="sm:hidden">Desk</span>
                       <span className="hidden sm:inline">Facility desk</span>
@@ -92,21 +92,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
                   <Link
                     href="/about"
-                    className="hidden sm:inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                    className="hidden sm:inline-flex min-h-[44px] items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
                   >
                     How it works
                   </Link>
 
                   <Link
                     href="/demo-login"
-                    className="hidden sm:inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                    className="hidden sm:inline-flex min-h-[44px] items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
                   >
                     Demo
                   </Link>
 
                   <Link
                     href="/account?mode=access"
-                    className="inline-flex min-h-[36px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#0E6B5C] bg-[#F3FAF8] border border-[#0E6B5C]/20 hover:bg-[#CDE8E1]/50 transition max-w-[90px] sm:max-w-[140px] truncate"
+                    className="inline-flex min-h-[44px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#0E6B5C] bg-[#F3FAF8] border border-[#0E6B5C]/20 hover:bg-[#CDE8E1]/50 transition max-w-[90px] sm:max-w-[140px] truncate"
                     title={displayName ?? "Sign in or create an account"}
                   >
                     {displayName ? displayName : "Sign in"}
@@ -115,11 +115,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
                 {/* Status Badge from screenshot */}
                 {mode === "mock" ? (
-                  <span className="hidden xs:inline-flex rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-[#8A6212] tracking-wide shrink-0">
+                  <span className="hidden xs:inline-flex rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-xs sm:text-xs font-bold text-[#8A6212] tracking-wide shrink-0">
                     MOCK AI
                   </span>
                 ) : (
-                  <span className="hidden xs:inline-flex rounded-full bg-[#CDE8E1] px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-[#0A5347] tracking-wide shrink-0">
+                  <span className="hidden xs:inline-flex rounded-full bg-[#CDE8E1] px-2 py-0.5 text-xs sm:text-xs font-bold text-[#0A5347] tracking-wide shrink-0">
                     LIVE · {mode.toUpperCase()}
                   </span>
                 )}
@@ -133,31 +133,24 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
 
-        {/* Mobile-Friendly Bottom Quick Bar (Viewport < 640px) */}
+        {/* Phone bottom bar (< 640px): only the destinations that make sense for this user */}
         <nav
-          aria-label="Mobile Navigation"
-          className="sm:hidden sticky bottom-0 z-30 bg-white/95 backdrop-blur-xs border-t border-[#E3E0D6] px-3 py-1 flex items-center justify-around text-[10px] text-[#4B6560]"
+          aria-label="Mobile navigation"
+          className="sm:hidden sticky bottom-0 z-30 bg-white/95 backdrop-blur-xs border-t border-[#E3E0D6] flex items-stretch text-xs text-[#4B6560] pb-[env(safe-area-inset-bottom)]"
         >
-          <Link href="/" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
-            <span className="text-base leading-none">🔍</span>
-            <span className="mt-0.5 font-semibold">Search</span>
-          </Link>
-          <Link href="/dashboard" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
-            <span className="text-base leading-none">📋</span>
-            <span className="mt-0.5 font-semibold">Dashboard</span>
-          </Link>
-          <Link href="/staff" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
-            <span className="text-base leading-none">🏥</span>
-            <span className="mt-0.5 font-semibold">Facility</span>
-          </Link>
-          <Link href="/audit" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
-            <span className="text-base leading-none">🛡️</span>
-            <span className="mt-0.5 font-semibold">Audit</span>
-          </Link>
-          <Link href="/privacy" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
-            <span className="text-base leading-none">⚙️</span>
-            <span className="mt-0.5 font-semibold">Privacy</span>
-          </Link>
+          {(user?.role === "patient"
+            ? [["/", "🔍", "Search"], ["/dashboard", "📋", "Bookings"], ["/audit", "🛡️", "Access log"], ["/privacy", "⚙️", "Privacy"]]
+            : user?.role === "facility_staff" || user?.role === "facility_admin"
+              ? [["/", "🔍", "Search"], ["/staff", "🏥", "Desk"], ["/staff/catalogue", "🏷️", "Catalogue"]]
+              : user?.role === "operator"
+                ? [["/", "🔍", "Search"], ["/operator", "✅", "Approvals"]]
+                : [["/", "🔍", "Search"], ["/account?mode=access", "👤", "Sign in"], ["/about", "ℹ️", "How it works"]]
+          ).map(([href, icon, label]) => (
+            <Link key={href} href={href} className="flex-1 flex flex-col items-center justify-center min-h-[52px] py-1 hover:text-[#0A5347] hover:bg-[#F3FAF8]">
+              <span className="text-base leading-none" aria-hidden="true">{icon}</span>
+              <span className="mt-0.5 font-semibold">{label}</span>
+            </Link>
+          ))}
         </nav>
       </body>
     </html>

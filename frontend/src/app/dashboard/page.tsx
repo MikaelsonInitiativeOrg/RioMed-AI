@@ -32,7 +32,7 @@ export default async function Dashboard() {
           </p>
           <Link
             href="/demo-login?next=/dashboard"
-            className="text-[11px] text-[#0E6B5C] hover:underline"
+            className="text-xs text-[#0E6B5C] hover:underline"
           >
             Switch profile
           </Link>

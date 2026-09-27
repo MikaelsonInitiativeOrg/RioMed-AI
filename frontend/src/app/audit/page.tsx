@@ -50,7 +50,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
           <span className="font-heading font-bold text-sm">
             Built toward Nigeria Data Protection Act (NDPA) requirements
           </span>
-          <span className="rounded-full bg-[#0A5347] px-2.5 py-0.5 text-[10px] font-bold text-white uppercase">
+          <span className="rounded-full bg-[#0A5347] px-2.5 py-0.5 text-xs font-bold text-white uppercase">
             Not yet legally reviewed
           </span>
         </div>
@@ -87,7 +87,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-[#12262B]">{e.action}</span>
                   {!e.byYou && (
-                    <span className="bg-[#FFF4E0] text-[#7A4B00] text-[10px] font-bold px-2 py-0.5 rounded-full">BY SOMEONE ELSE</span>
+                    <span className="bg-[#FFF4E0] text-[#7A4B00] text-xs font-bold px-2 py-0.5 rounded-full">BY SOMEONE ELSE</span>
                   )}
                 </div>
                 <p className="text-[#4B6560]">
@@ -99,7 +99,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
                   )}
                 </p>
               </div>
-              <div className="text-right text-[11.5px] text-[#8B9490]">{lagosDateTime(e.at)}</div>
+              <div className="text-right text-xs text-[#8B9490]">{lagosDateTime(e.at)}</div>
             </div>
           ))}
         </div>
@@ -109,13 +109,13 @@ export default async function AuditPage(props: PageProps<"/audit">) {
       <div className="rounded-xl border border-[#E3E0D6] bg-white p-4 text-xs text-[#4B6560] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <span className="font-bold text-[#12262B]">Audit Retention Notice</span>
-          <p className="text-[11px] text-[#8B9490]">
+          <p className="text-xs text-[#8B9490]">
             Users cannot edit or delete audit events. The retention period is still to be decided (PRD section 11.5).
           </p>
         </div>
         <Link
           href="/privacy"
-          className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-[#0E6B5C] px-3.5 py-1.5 text-xs font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] shrink-0"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-[#0E6B5C] px-3.5 py-1.5 text-xs font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] shrink-0"
         >
           Manage Data &amp; Privacy →
         </Link>

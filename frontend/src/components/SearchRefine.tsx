@@ -29,7 +29,7 @@ export function SearchRefine({ test, area, day, part, title }: SearchRefineProps
       {/* Design System "Understood as" editable chip preview */}
       {(testName || area || timeDesc) && (
         <div className="mb-4 pb-3 border-b border-[#F0EEE7]">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#4B6560] mb-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#4B6560] mb-2">
             Understood as (tap fields below to adjust)
           </p>
           <div className="flex flex-wrap gap-2">

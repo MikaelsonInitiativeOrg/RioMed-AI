@@ -83,7 +83,7 @@ export default async function Home(props: PageProps<"/">) {
                 <Link
                   key={s.label}
                   href={`/?q=${encodeURIComponent(s.text)}`}
-                  className="rounded-full bg-[#F3FAF8] border border-[#CDE8E1] px-4 py-2 text-xs sm:text-[13px] font-semibold text-[#0A5347] transition hover:bg-[#CDE8E1]/60 shadow-2xs"
+                  className="inline-flex min-h-[44px] items-center rounded-full bg-[#F3FAF8] border border-[#CDE8E1] px-4 py-2 text-xs sm:text-[13px] font-semibold text-[#0A5347] transition hover:bg-[#CDE8E1]/60 shadow-2xs"
                 >
                   {s.label}
                 </Link>
@@ -148,17 +148,17 @@ export default async function Home(props: PageProps<"/">) {
                     {view.ai && (
                       <div className="pt-2 border-t border-[#F0EEE7] flex flex-wrap items-center gap-2 text-xs text-[#4B6560]">
                         {view.ai.source === "mock" && (
-                          <span className="rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-[10.5px] font-bold text-[#8A6212]">
+                          <span className="rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-xs font-bold text-[#8A6212]">
                             MOCK AI
                           </span>
                         )}
                         {view.ai.source === "llm" && (
-                          <span className="rounded-full bg-[#CDE8E1] px-2 py-0.5 text-[10.5px] font-bold text-[#0A5347]">
+                          <span className="rounded-full bg-[#CDE8E1] px-2 py-0.5 text-xs font-bold text-[#0A5347]">
                             LIVE · {view.ai.mode.toUpperCase()}
                           </span>
                         )}
                         {view.ai.source === "fallback" && (
-                          <span className="rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6212]">
+                          <span className="rounded-full bg-[#FFF4E5] px-2 py-0.5 text-xs font-bold text-[#8A6212]">
                             FALLBACK
                           </span>
                         )}
@@ -284,7 +284,7 @@ export default async function Home(props: PageProps<"/">) {
         <HomeComposer initialQuery={q} />
 
         {/* Required Medical Disclaimer from screenshot & PRD AI-022 */}
-        <p className="text-center text-[10.5px] sm:text-[11px] text-[#4B6560] mt-2 mb-1">
+        <p className="text-center text-xs sm:text-xs text-[#4B6560] mt-2 mb-1">
           RioMed helps you find and book care. It does not give medical advice.
         </p>
       </footer>

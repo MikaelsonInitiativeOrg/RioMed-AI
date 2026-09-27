@@ -52,7 +52,7 @@ export function HomeComposer({ initialQuery = "" }: HomeComposerProps) {
         <button
           type="submit"
           aria-label="Send"
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0E6B5C] text-white flex items-center justify-center hover:bg-[#0A5347] active:scale-[0.98] transition shrink-0 shadow-2xs"
+          className="w-11 h-11 rounded-xl bg-[#0E6B5C] text-white flex items-center justify-center hover:bg-[#0A5347] active:scale-[0.98] transition shrink-0 shadow-2xs"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path

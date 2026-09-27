@@ -52,14 +52,14 @@ export function LiveNearby({ address }: { address: string }) {
           {state.places.map((p) => (
             <li key={p.placeId} className="flex items-center justify-between gap-3 py-2 text-sm">
               <span>{p.name}</span>
-              <a href={p.mapsUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-lg border border-sky-900/20 px-3 py-1.5 text-sky-900 hover:bg-sky-50">
+              <a href={p.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-sky-900/20 px-3 text-sky-900 hover:bg-sky-50">
                 Open in Google Maps
               </a>
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-2 text-[11px] text-slate-500">Sources: Google Maps</p>
+      <p className="mt-2 text-xs text-slate-500">Sources: Google Maps</p>
     </section>
   );
 }

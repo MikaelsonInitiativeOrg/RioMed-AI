@@ -39,7 +39,7 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
       <section className="rounded-2xl border border-[#E3E0D6] bg-white p-5 sm:p-7 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#F0EEE7]">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#4B6560]">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#4B6560]">
               Booking reference
             </p>
             <p className="text-2xl sm:text-3xl font-mono font-bold tracking-wider text-[#0A5347]">
@@ -164,7 +164,7 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
             </h2>
             <Link
               href={`/appointments/${a.id}/result`}
-              className="rounded-lg bg-[#0E6B5C] text-white px-3.5 py-1.5 text-xs font-heading font-bold hover:bg-[#0A5347] transition shadow-xs"
+              className="inline-flex min-h-[44px] items-center rounded-lg bg-[#0E6B5C] text-white px-4 text-sm font-heading font-bold hover:bg-[#0A5347] transition shadow-xs"
             >
               Open Result Viewer →
             </Link>
@@ -186,7 +186,7 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
                       Version {r.version}
                     </span>
                     {r.superseded && (
-                      <span className="text-[10px] font-semibold text-[#4B6560] bg-[#E3E0D6] px-1.5 py-0.5 rounded">
+                      <span className="text-xs font-semibold text-[#4B6560] bg-[#E3E0D6] px-1.5 py-0.5 rounded">
                         superseded
                       </span>
                     )}

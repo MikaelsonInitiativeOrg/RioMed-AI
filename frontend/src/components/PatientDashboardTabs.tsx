@@ -54,7 +54,7 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
         <button
           type="button"
           onClick={() => setActiveTab("upcoming")}
-          className={`pb-3 font-heading transition ${
+          className={`min-h-[44px] pb-3 font-heading transition ${
             activeTab === "upcoming"
               ? "font-bold text-[#0A5347] border-b-2 border-[#0A5347]"
               : "text-[#8B9490] hover:text-[#12262B]"
@@ -65,7 +65,7 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
         <button
           type="button"
           onClick={() => setActiveTab("past")}
-          className={`pb-3 font-heading transition ${
+          className={`min-h-[44px] pb-3 font-heading transition ${
             activeTab === "past"
               ? "font-bold text-[#0A5347] border-b-2 border-[#0A5347]"
               : "text-[#8B9490] hover:text-[#12262B]"
@@ -76,7 +76,7 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
         <button
           type="button"
           onClick={() => setActiveTab("results")}
-          className={`pb-3 font-heading transition ${
+          className={`min-h-[44px] pb-3 font-heading transition ${
             activeTab === "results"
               ? "font-bold text-[#0A5347] border-b-2 border-[#0A5347]"
               : "text-[#8B9490] hover:text-[#12262B]"
@@ -127,7 +127,7 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
                   {a.amountKobo > 0 && ` · ${formatNaira(a.amountKobo)}`}
                 </p>
 
-                <p className="font-mono text-[11.5px] text-[#8B9490] mt-1">
+                <p className="font-mono text-xs text-[#8B9490] mt-1">
                   Ref: <strong className="text-[#4B6560]">{a.reference}</strong>
                 </p>
 
@@ -144,7 +144,7 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
 
                   <Link
                     href={`/appointments/${a.id}`}
-                    className="inline-flex items-center gap-1 text-xs font-heading font-bold text-[#0E6B5C] hover:underline min-h-[36px]"
+                    className="inline-flex items-center gap-1 text-xs font-heading font-bold text-[#0E6B5C] hover:underline min-h-[44px]"
                   >
                     View details →
                   </Link>
@@ -171,14 +171,14 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
                   <div className="font-heading font-bold text-xs sm:text-sm text-[#12262B]">
                     {getTest(r.testCode)?.name ?? r.testCode}
                   </div>
-                  <div className="text-[11.5px] text-[#4B6560]">
+                  <div className="text-xs text-[#4B6560]">
                     Available · {r.facilityName}
                   </div>
                 </div>
 
                 <Link
                   href={`/appointments/${r.id}`}
-                  className="rounded-lg bg-[#0E6B5C] text-white px-3 py-1.5 text-xs font-heading font-bold hover:bg-[#0A5347] transition shadow-xs shrink-0"
+                  className="inline-flex min-h-[44px] items-center rounded-lg bg-[#0E6B5C] text-white px-4 text-sm font-heading font-bold hover:bg-[#0A5347] transition shadow-xs shrink-0"
                 >
                   Open Result
                 </Link>
@@ -197,7 +197,7 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
         </div>
         <div>
           <Link href="/privacy" className="hover:underline">
-            Manage dependants · Export or delete my data →
+            Privacy &amp; download my data →
           </Link>
         </div>
       </div>

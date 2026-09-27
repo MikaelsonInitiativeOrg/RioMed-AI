@@ -3,7 +3,7 @@
  * Dependants and deletion aren't built yet, so they are shown as "coming soon" rather than faked.
  */
 function ComingSoon() {
-  return <span className="rounded-full bg-[#F0EEE7] px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#4B6560]">Coming soon</span>;
+  return <span className="rounded-full bg-[#F0EEE7] px-2.5 py-0.5 text-xs font-bold uppercase text-[#4B6560]">Coming soon</span>;
 }
 
 export function PrivacyManager() {

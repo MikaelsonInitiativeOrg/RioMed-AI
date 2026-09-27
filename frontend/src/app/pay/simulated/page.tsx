@@ -18,7 +18,7 @@ export default async function SimulatedPay(props: PageProps<"/pay/simulated">) {
     <div className="mx-auto max-w-lg space-y-4 py-2">
       <section className="rounded-2xl border-2 border-dashed border-[#C98A1D] bg-white p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-[#F0EEE7]">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF4E5] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#8A6212]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF4E5] px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#8A6212]">
             <span className="h-2 w-2 rounded-full bg-[#C98A1D]" aria-hidden="true" />
             Simulated payment · no money moves
           </span>

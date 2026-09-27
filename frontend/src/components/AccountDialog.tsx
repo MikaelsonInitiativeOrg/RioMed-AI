@@ -18,7 +18,7 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
       <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-white p-5 shadow-xl max-h-[92vh] overflow-y-auto">
         <div className="flex items-start justify-between gap-3">
           <h1 id="account-title" className="text-lg font-bold text-emerald-950">{title}</h1>
-          <Link href="/" aria-label="Close" className="-m-2 p-2 text-xl leading-none text-slate-500 hover:text-slate-800">×</Link>
+          <Link href="/" aria-label="Close" className="-m-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-2xl leading-none text-slate-500 hover:text-slate-800">×</Link>
         </div>
         <div className="mt-3">{children}</div>
       </div>
