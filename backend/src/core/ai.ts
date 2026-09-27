@@ -7,6 +7,7 @@ import { TEST_CATALOG } from "./catalog";
 import { PLACES } from "./geo";
 import {
   detectEmergencySafe,
+  isTestMentioned,
   parseDeterministic,
   validateModelIntent,
   type EmergencyCheck,
@@ -38,7 +39,7 @@ export function buildSystemPrompt(now: Date): string {
     'intent: one of "find_test" (a test is named), "find_facility" (a place or facility type but no test), "emergency", "unsupported".',
     "tests: array of codes from the catalogue below ONLY. Never invent codes. If the user only describes symptoms, return [] (do not recommend tests).",
     "locationQuery: the place the user mentions, corrected to the closest known place name if misspelled, else null. Never output coordinates.",
-    'when: null, or {"day": "today"|"tomorrow"|"monday".."sunday"|"YYYY-MM-DD"|null, "part": "morning"|"afternoon"|"evening"|"any"}. "tonight" = today evening.',
+    'when: null, or {"day": "today"|"tomorrow"|"monday".."sunday"|"YYYY-MM-DD"|null, "part": "morning"|"afternoon"|"evening"|"any"}. Keep the user\'s own day word ("today", "tomorrow", a weekday); use YYYY-MM-DD only if the user gave a calendar date. "tonight" = today evening. A part with no day ("in the morning") = {"day": null, ...}. A day with no part = part "any". No day and no part = null.',
     'facilityType: null or one of "hospital","clinic","laboratory","diagnostic_centre","primary_health_centre".',
     "confidence: number 0..1.",
     "Never diagnose, never give dosage or treatment advice; such requests are \"unsupported\".",
@@ -152,12 +153,18 @@ export async function parseIntent(
   const env = opts.env ?? process.env;
   const started = Date.now();
   const emergency = detectEmergencySafe(input);
-  const finish = (intent: SearchIntent, rest: Omit<IntentResult, "intent" | "emergency" | "latencyMs">): IntentResult => ({
-    intent: emergency.isEmergency ? { ...intent, intent: "emergency" } : intent,
-    emergency,
-    latencyMs: Date.now() - started,
-    ...rest,
-  });
+  // The rules always run and can't be switched off by the model. The model may ADD an
+  // emergency the rules missed (fail-safe direction), but can never remove one.
+  const finish = (intent: SearchIntent, rest: Omit<IntentResult, "intent" | "emergency" | "latencyMs">): IntentResult => {
+    const aiFlagged = rest.source === "llm" && intent.intent === "emergency" && !emergency.isEmergency;
+    const combined = aiFlagged ? { isEmergency: true, matched: ["ai-flagged"] } : emergency;
+    return {
+      intent: combined.isEmergency ? { ...intent, intent: "emergency" } : intent,
+      emergency: combined,
+      latencyMs: Date.now() - started,
+      ...rest,
+    };
+  };
 
   const requested = (env.AI_PROVIDER ?? "mock").trim().toLowerCase();
   if (!MODES.includes(requested as AiMode)) {
@@ -186,8 +193,14 @@ export async function parseIntent(
     if (!res.ok) throw new Error(`provider HTTP ${res.status}`);
     const json = await Promise.race([res.json(), timeout]);
     const content = req.extract(json);
-    const intent = validateModelIntent(content);
-    if (!intent) throw new Error("invalid model output");
+    const validated = validateModelIntent(content);
+    if (!validated) throw new Error("invalid model output");
+    // FR-017: drop test codes the user didn't actually name (no tests from symptoms).
+    const tests = validated.tests.filter((t) => isTestMentioned(t, input));
+    const intent: SearchIntent =
+      tests.length === validated.tests.length
+        ? validated
+        : { ...validated, tests, intent: validated.intent === "find_test" && tests.length === 0 ? (validated.locationQuery || validated.facilityType ? "find_facility" : "unsupported") : validated.intent };
     return finish(intent, { source: "llm", mode, model: env.AI_MODEL });
   } catch (e) {
     const reason = e instanceof Error ? e.message : "provider error";

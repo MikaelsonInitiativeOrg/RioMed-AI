@@ -7,7 +7,17 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseIntent } from "../src/core/ai";
-import { parseDeterministic, type SearchIntent } from "../src/core/intent";
+import { parseDeterministic, resolveWhen, type SearchIntent, type When } from "../src/core/intent";
+
+// Score "day" by meaning: "tomorrow" and "2026-09-28" are the same day if they resolve to the same window.
+const NOW = new Date();
+function sameDay(actual: When | null, expectedDay: string | null, expectedPart: string | null): boolean {
+  if ((actual?.day ?? null) === expectedDay) return true;
+  if (!actual || expectedDay === null) return false;
+  const a = resolveWhen(actual, NOW);
+  const e = resolveWhen({ day: expectedDay, part: (expectedPart ?? "any") as When["part"] }, NOW);
+  return !!a && !!e && a.start.toISOString().slice(0, 10) === e.start.toISOString().slice(0, 10);
+}
 
 interface Case {
   id: string;
@@ -26,7 +36,7 @@ function score(i: SearchIntent, e: Case["expected"]): Record<Exclude<Field, "all
     intent: i.intent === e.intent,
     tests: sameTests,
     locationQuery: (i.locationQuery ?? null) === e.locationQuery,
-    day: (i.when?.day ?? null) === e.day,
+    day: sameDay(i.when, e.day, e.part),
     part: (i.when?.part ?? null) === e.part,
   };
 }
@@ -52,6 +62,7 @@ async function main() {
   let llm: null | Record<string, unknown> = null;
   if (mode !== "mock") {
     const rows: Array<Record<Exclude<Field, "all">, boolean>> = [];
+    const misses: Array<{ id: string; text: string; source: string; got: SearchIntent; fields: string[] }> = [];
     const latencies: number[] = [];
     let fallbacks = 0;
     const reasons: Record<string, number> = {};
@@ -62,12 +73,16 @@ async function main() {
         fallbacks++;
         reasons[r.fallbackReason ?? "?"] = (reasons[r.fallbackReason ?? "?"] ?? 0) + 1;
       }
-      rows.push(score(r.intent, c.expected));
+      const sc = score(r.intent, c.expected);
+      rows.push(sc);
+      const bad = Object.entries(sc).filter(([, ok]) => !ok).map(([k]) => k);
+      if (bad.length) misses.push({ id: c.id, text: c.text, source: r.source, got: r.intent, fields: bad });
       process.stdout.write(r.source === "llm" ? "." : "f");
       if (delay) await new Promise((res) => setTimeout(res, delay));
     }
     process.stdout.write("\n");
-    llm = { provider: mode, model: process.env.AI_MODEL, accuracy: tally(rows), fallbacks, fallbackReasons: reasons, latencyMs: { p50: pct(latencies, 0.5), p95: pct(latencies, 0.95) } };
+    const emergencyMissedLlm = cases.filter((c, i) => c.expected.emergency && !rows[i].intent).map((c) => c.id);
+    llm = { provider: mode, model: process.env.AI_MODEL, accuracy: tally(rows), fallbacks, fallbackReasons: reasons, latencyMs: { p50: pct(latencies, 0.5), p95: pct(latencies, 0.95) }, emergencyMissed: emergencyMissedLlm, misses };
   }
 
   const byTag: Record<string, Record<string, number>> = {};
@@ -82,7 +97,8 @@ async function main() {
     llm,
   };
   writeFileSync(path.join(__dirname, "report.json"), JSON.stringify(report, null, 2) + "\n");
-  console.log(JSON.stringify({ baseline: report.baseline.accuracy, emergencyMissed: emergencyMiss, falseEmergency, llm }, null, 2));
+  const summary = llm ? { ...llm, misses: undefined } : null;
+  console.log(JSON.stringify({ baseline: report.baseline.accuracy, emergencyMissed: emergencyMiss, falseEmergency, llm: summary }, null, 2));
 }
 
 main();
