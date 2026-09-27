@@ -58,3 +58,9 @@ export function looksLikeCredential(text: string): boolean {
   // "password is x", "pin: x", "pin = x", or a keyword followed by something with a digit.
   return /\b(password|passcode|passwd|pin)\b\s*(is|:|=|na)\s*\S{3,}/.test(t) || /\b(password|passcode|passwd|pin)\b\s*\S*\d\S*/.test(t);
 }
+
+/** "near me", "nearby", "close to me", "around me", "wey dey near me": the user wants their own location used. */
+export function wantsNearMe(text: string): boolean {
+  if (typeof text !== "string") return false;
+  return /\b(near me|nearby|near by|close to me|closest to me|around me|near my (house|home|place|area|location)|my location|where i am)\b/.test(normalize(text));
+}

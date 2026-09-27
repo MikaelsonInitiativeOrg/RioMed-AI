@@ -16,9 +16,17 @@ const PART_PHRASES: Array<{ phrase: string; value: DayPart }> = [
 ];
 const FACILITY_PHRASES: Array<{ phrase: string; value: FacilityType }> = [
   { phrase: "hospital", value: "hospital" },
+  { phrase: "hospitals", value: "hospital" },
   { phrase: "clinic", value: "clinic" },
+  { phrase: "clinics", value: "clinic" },
   { phrase: "lab", value: "laboratory" },
+  { phrase: "labs", value: "laboratory" },
   { phrase: "laboratory", value: "laboratory" },
+  { phrase: "laboratories", value: "laboratory" },
+  { phrase: "health centre", value: "primary_health_centre" },
+  { phrase: "health centres", value: "primary_health_centre" },
+  { phrase: "health center", value: "primary_health_centre" },
+  { phrase: "health centers", value: "primary_health_centre" },
   { phrase: "diagnostic", value: "diagnostic_centre" },
   { phrase: "diagnostic centre", value: "diagnostic_centre" },
   { phrase: "diagnostic center", value: "diagnostic_centre" },

@@ -16,3 +16,6 @@ Read this at the start of every session. Add a line whenever something bites, an
 | Two agents editing the same working folder | Each agent uses its own clone or worktree. Never share a working tree |
 | Local dev and production share one Neon database | Running `db:seed` locally wipes the live demo data. Reseed only on purpose |
 | Neon was briefly unreachable from Prisma (about 10 minutes) while node-postgres could still connect | Retry before debugging config. Batch seed inserts (createMany) so the pooler does not drop long runs |
+| A mock `npm run eval` overwrote report.json and wiped the live-LLM results shown on /about | eval/run.ts now carries the last live results over when no model is configured |
+| The Maps-grounding prompt said "in Nigeria", so a Tunis device location returned Lagos places | Device-location searches ask for "closest to latitude X, longitude Y" and never name a country |
+| The rule-based fallback missed plurals ("hospitals") and dropped "near me" requests | Facility words include plurals, and wantsNearMe() always offers "Use my location" |

@@ -9,7 +9,7 @@ import { LiveNearby } from "@/components/LiveNearby";
 import { NearMeButton } from "@/components/NearMeButton";
 import { RioMedLogo } from "@/components/Logo";
 import { redirect } from "next/navigation";
-import { detectAccountIntent, looksLikeCredential } from "@riomed/backend/core/intent/account";
+import { detectAccountIntent, looksLikeCredential, wantsNearMe } from "@riomed/backend/core/intent/account";
 import { HomeComposer } from "@/components/HomeComposer";
 import { parseDeviceOrigin, runPromptSearch, searchWithIntent, type Found, type SearchView } from "@riomed/backend/server/search";
 
@@ -200,7 +200,7 @@ export default async function Home(props: PageProps<"/">) {
                 )}
 
                 {/* Clarification notes */}
-                {view.intent.intent === "unsupported" && !view.place && (
+                {view.intent.intent === "unsupported" && !view.place && !wantsNearMe(q) && (
                   <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
                     <p className="font-bold">Request clarification</p>
                     <p className="mt-1">
@@ -218,7 +218,7 @@ export default async function Home(props: PageProps<"/">) {
                   </div>
                 )}
 
-                {!view.place && view.intent.intent !== "unsupported" && !view.intent.locationQuery && (
+                {!view.place && !view.intent.locationQuery && view.intent.intent !== "emergency" && (view.intent.intent !== "unsupported" || wantsNearMe(q)) && (
                   <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
                     <p className="font-bold">Where are you?</p>
                     <p className="mt-1 mb-3">

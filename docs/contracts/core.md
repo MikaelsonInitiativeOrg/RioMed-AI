@@ -147,7 +147,8 @@ Examples:
   - "clinic" gives `clinic`.
   - "lab" or "laboratory" gives `laboratory`.
   - "diagnostic" gives `diagnostic_centre`.
-  - "phc" or "primary health" gives `primary_health_centre`.
+  - "phc", "primary health" or "health centre(s)" / "health center(s)" gives `primary_health_centre`.
+  - Plurals count too ("hospitals", "clinics", "labs", "laboratories"), added 2026-09-27.
   - Otherwise `null`.
 - **`intent`:**
   - `emergency` if `detectEmergency(text).isEmergency`.
@@ -398,6 +399,8 @@ export type AccountType = "patient" | "facility";
 export interface AccountIntent { action: AccountAction; type: AccountType }
 export function detectAccountIntent(text: string): AccountIntent | null;
 export function looksLikeCredential(text: string): boolean;
+/** True for "near me", "nearby", "close to me", "around me", "near my house/home/place/area/location", "my location", "where i am". */
+export function wantsNearMe(text: string): boolean;
 ```
 
 **`detectAccountIntent`** uses fixed rules only, with no AI. It is case-insensitive and matches

@@ -90,6 +90,16 @@ async function main() {
     byTag[tag] = tally(cases.map((c, i) => [c, baseline[i]] as const).filter(([c]) => c.tags.includes(tag)).map(([, r]) => r));
   }
 
+  // A mock/baseline-only run keeps the last live-model results instead of wiping them.
+  if (!llm) {
+    try {
+      const prev = JSON.parse(readFileSync(path.join(__dirname, "report.json"), "utf8"));
+      if (prev.llm) llm = { ...prev.llm, carriedOverFrom: prev.generatedAt };
+    } catch {
+      /* no previous report */
+    }
+  }
+
   const report = {
     generatedAt: new Date().toISOString(),
     cases: cases.length,
