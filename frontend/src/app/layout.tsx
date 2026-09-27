@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
           <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4 sm:px-6">
             <Link href="/" aria-label="RioMed AI home" className="flex min-h-[44px] items-center gap-2.5 rounded-lg">
-              <RioMedLogo size={30} />
+              <RioMedLogo size={32} />
               <span className="text-lg font-bold tracking-tight text-foreground">
                 RioMed <span className="text-primary">AI</span>
               </span>

@@ -1,5 +1,6 @@
 import { CalendarDays, Tags } from "lucide-react";
 import Link from "next/link";
+import { RioMedLogo } from "@/components/Logo";
 import { signOutAction } from "@/app/actions";
 
 /**
@@ -27,11 +28,7 @@ export function FacilityShell({
       <aside className="bg-primary-strong text-primary-soft p-4 md:p-5 md:w-[220px] md:shrink-0 md:flex md:flex-col md:justify-between">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 48 48">
-                <path d="M9 25h6l3-9 5 17 4-14 3 6h9" stroke="#FFFFFF" strokeWidth="3.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
+            <RioMedLogo size={32} />
             <div className="min-w-0">
               <p className="font-heading font-bold text-sm text-white truncate">{facilityName}</p>
               <p className="text-xs text-primary-muted">Facility desk</p>
