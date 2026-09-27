@@ -1,20 +1,23 @@
 # RioMed AI
 
 Describe the medical test you need in plain language. RioMed finds the closest facilities to you,
-anywhere, books a slot at a partner lab, takes payment, and delivers the result as a secure PDF
+anywhere, books a slot at a partner lab, lets you pay the lab directly by bank transfer, and delivers the result as a secure PDF
 instead of paper. Clinics register themselves and are bookable the same minute.
 
 > *"I need a malaria test around Ikeja tomorrow morning"* gives you **Malaria parasite · Ikeja ·
 > tomorrow 07:00–12:00**, with ranked facilities, prices and free times.
 
 This is the GoMyCode *Come Build with AI* hackathon build (27 September 2026). All facilities and
-patients are **synthetic**, and payments are **Paystack test mode**, or a clearly labelled
-simulation when no key is set.
+patients are **synthetic**. Payment is a **direct bank transfer to the facility's own account**
+(Paystack was removed on 27 Sep); the facility confirms receipt. Emails are a **demo outbox**
+shown on the in-app Inbox.
 
 ## For judges
 
 - **Live:** https://riomed-ai.vercel.app (auto-deploys from `main`)
-- **Try:** type *create an account*, then *malaria test near Ikeja tomorrow morning*, book and pay.
+- **Try:** type *create an account*, then *malaria test near Ikeja tomorrow morning*, book, and
+  follow the transfer instructions. Clinics (*register my clinic*) confirm payments on their desk
+  and edit prices under *Catalogue*. Every step sends a demo email to the *Inbox*.
   Clinics: *register my clinic*. Any city works: *clinics in Nairobi*, *hospitals in New York*.
 - **AI quality:** 120 hand-labelled prompts (English, Nigerian English, Pidgin, typos,
   emergencies, prompt injection). All fields right: 85.0% rules-only vs **89.2% with Gemini**;
