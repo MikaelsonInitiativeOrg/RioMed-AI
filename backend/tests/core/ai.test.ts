@@ -541,3 +541,26 @@ describe("parseIntent: no tests from symptoms (FR-017 guard)", () => {
     expect(r.emergency.matched).toContain("chest pain");
   });
 });
+
+describe("parseIntent: Gemini thinking config", () => {
+  const env = { AI_PROVIDER: "gemini", AI_API_KEY: "k", AI_MODEL: "m" };
+  const good = JSON.stringify({ intent: "find_facility", tests: [], locationQuery: "Kano", when: null, facilityType: "clinic", confidence: 0.9 });
+  it("asks for minimal thinking", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(geminiBody(good)), { status: 200 }));
+    const r = await parseIntent("clinics in Kano", { env, fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(r.source).toBe("llm");
+    const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(body.generationConfig.thinkingConfig).toEqual({ thinkingLevel: "minimal" });
+  });
+  it("retries once without it if the model rejects it (400)", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("{}", { status: 400 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(geminiBody(good)), { status: 200 }));
+    const r = await parseIntent("clinics in Kano", { env, fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(r.source).toBe("llm");
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    const retry = JSON.parse(String((fetchImpl.mock.calls[1] as unknown as [string, RequestInit])[1].body));
+    expect(retry.generationConfig.thinkingConfig).toBeUndefined();
+  });
+});

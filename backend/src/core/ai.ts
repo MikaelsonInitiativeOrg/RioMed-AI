@@ -96,7 +96,8 @@ function buildRequest(
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts: [{ text: user }] }],
-          generationConfig: { maxOutputTokens: 300, temperature: 0, responseMimeType: "application/json" },
+          // Extraction, not reasoning: minimal thinking keeps latency low and predictable.
+          generationConfig: { maxOutputTokens: 300, temperature: 0, responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "minimal" } },
         }),
       },
       extract: (j) => {
@@ -189,7 +190,13 @@ export async function parseIntent(
         reject(new Error("timeout"));
       }, timeoutMs);
     });
-    const res = await Promise.race([fetchImpl(req.url, { ...req.init, signal: controller.signal }), timeout]);
+    let res = await Promise.race([fetchImpl(req.url, { ...req.init, signal: controller.signal }), timeout]);
+    // A model that doesn't accept thinkingConfig answers 400: retry once without it, same time budget.
+    if (res.status === 400 && mode === "gemini" && typeof req.init.body === "string" && req.init.body.includes("thinkingConfig")) {
+      const body = JSON.parse(req.init.body);
+      delete body.generationConfig.thinkingConfig;
+      res = await Promise.race([fetchImpl(req.url, { ...req.init, body: JSON.stringify(body), signal: controller.signal }), timeout]);
+    }
     if (!res.ok) throw new Error(`provider HTTP ${res.status}`);
     const json = await Promise.race([res.json(), timeout]);
     const content = req.extract(json);
