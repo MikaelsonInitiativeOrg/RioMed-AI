@@ -1,5 +1,6 @@
 import { Download, LayoutDashboard, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { AboutTest } from "@/components/AboutTest";
 import { notFound, redirect } from "next/navigation";
 import { getTest } from "@riomed/backend/core/catalog";
 import { lagosDateTime } from "@/lib/format";
@@ -179,6 +180,7 @@ export default async function ResultViewerPage(props: PageProps<"/appointments/[
         <p>Each time this PDF is opened, it is recorded in your access history.</p>
         <p>RioMed does not interpret or diagnose results. Please consult your clinician.</p>
       </div>
+      <AboutTest testCode={a.testCode} />
     </div>
   );
 }

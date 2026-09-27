@@ -35,7 +35,7 @@ shown on the in-app Inbox.
 | --- | --- |
 | Turns free text (English, Nigerian English, Pidgin, misspellings) into a schema-validated search: catalogue test codes, a place phrase and a time window | Invent facilities, prices or times. Every fact shown comes from the database or Google Maps' structured results |
 | Corrects misspelled places and tests toward known names | Choose coordinates. Places resolve through a Lagos gazetteer, then OpenStreetMap worldwide; nothing is guessed |
-| | Diagnose, recommend tests from symptoms, give doses or interpret results |
+| Symptom help: for "my body is hot and I feel weak" it shows tests *often requested* for those symptoms as choices to tap, from a fixed list (draft, pending clinician review), never picked by the AI | Diagnose, choose tests for you, give doses or interpret your own results (the glossary explains what a test measures, never your values) |
 | | Decide emergencies. Fixed rules catch red-flag phrases **before** the model runs and show **112** |
 
 If the model is slow (over 4 s), rate-limited or down, a deterministic parser answers and

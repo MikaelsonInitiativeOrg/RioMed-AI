@@ -8,6 +8,8 @@ import { FacilityCard } from "@/components/FacilityCard";
 import { LiveNearby } from "@/components/LiveNearby";
 import { NearMeButton } from "@/components/NearMeButton";
 import { PromptBookCard } from "@/components/PromptBookCard";
+import { SymptomHelp } from "@/components/SymptomHelp";
+import { suggestTestsForSymptoms } from "@riomed/backend/core/symptoms";
 import { redirect } from "next/navigation";
 import { detectAccountIntent, looksLikeCredential, wantsNearMe } from "@riomed/backend/core/intent/account";
 import { HomeComposer } from "@/components/HomeComposer";
@@ -59,6 +61,10 @@ export default async function Home(props: PageProps<"/">) {
     };
     view = { intent, ...(await searchWithIntent(intent)) };
   }
+
+  // Symptom help: fixed, clinician-reviewable list; only when no test was named and it's not an emergency.
+  const symptomHelp = view && q && view.intent.tests.length === 0 && !view.emergency?.isEmergency ? suggestTestsForSymptoms(q) : { matched: [], tests: [] };
+  const hasSymptomHelp = symptomHelp.tests.length > 0;
 
   const aiBadge = view?.ai && (
     <span className="inline-flex items-center gap-1.5 text-xs text-subtle-foreground">
@@ -195,13 +201,15 @@ export default async function Home(props: PageProps<"/">) {
             </Note>
           )}
 
-          {view.intent.intent === "unsupported" && !view.place && !wantsNearMe(q) && (
+          {hasSymptomHelp && <SymptomHelp help={symptomHelp} place={view.place?.name ?? view.intent.locationQuery ?? null} origin={deviceOrigin} />}
+
+          {view.intent.intent === "unsupported" && !view.place && !wantsNearMe(q) && !hasSymptomHelp && (
             <Note tone="warning" title="Tell me the test or the area">
               I couldn&apos;t tell which test or area you mean. Use Edit above, or try “FBC test in Yaba”. RioMed can&apos;t answer medical questions or suggest a diagnosis; please talk to a clinician for that.
             </Note>
           )}
 
-          {view.intent.tests.length === 0 && view.intent.intent !== "unsupported" && view.intent.intent !== "emergency" && view.place && (
+          {view.intent.tests.length === 0 && view.intent.intent !== "unsupported" && view.intent.intent !== "emergency" && view.place && !hasSymptomHelp && (
             <Note>
               No specific test named, so these are all facilities near {view.place.name === "your location" ? "you" : view.place.name}. RioMed doesn&apos;t choose tests from symptoms; a clinic can advise you.
             </Note>

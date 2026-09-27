@@ -62,7 +62,7 @@ export default async function About() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">✓</span>
-              <span><strong className="text-foreground">Diagnose or prescribe:</strong> Does not suggest tests from symptoms, give doses or interpret results.</span>
+              <span><strong className="text-foreground">Diagnose or prescribe:</strong> Does not diagnose, choose tests for you, give doses or interpret your results. For symptoms, it shows tests often requested from a fixed list (draft, pending clinician review) that you choose from.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">✓</span>

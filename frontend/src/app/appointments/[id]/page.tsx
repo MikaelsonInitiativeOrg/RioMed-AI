@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AboutTest } from "@/components/AboutTest";
 import { notFound, redirect } from "next/navigation";
 import { getTest } from "@riomed/backend/core/catalog";
 import { formatNaira } from "@riomed/backend/core/money";
@@ -266,6 +267,7 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
           </div>
         </section>
       )}
+      <AboutTest testCode={a.testCode} />
     </div>
   );
 }

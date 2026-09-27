@@ -480,3 +480,8 @@ export const LOCK_MINUTES: 15;
   - `phone`: optional, 7–20 characters of digits, spaces, `+()-`.
   - `prices`: ticked test code → naira as typed (commas and ₦ allowed). Unknown codes are ignored. Each price must be ₦100–₦1,000,000 and is stored as whole-naira kobo. At least one test is required.
 - `buildOpeningSlots(facilityId, type, now)`: hourly slots for `SCHEDULE_DAYS` (14) days from today, `OPEN_HOUR`–`CLOSE_HOUR` (08–18) on the WAT clock. Only future starts. Closed Sundays unless `type` is `hospital`. Capacity `SLOT_CAPACITY` (2). Ids are deterministic and unique.
+
+## `@/core/symptoms` and `@/core/testInfo` (added 2026-09-27)
+
+- `suggestTestsForSymptoms(text)` returns `{ matched: string[], tests: TestCode[] }`: tests OFTEN REQUESTED for the symptom groups found in the text, from a fixed list (`SYMPTOM_LIST_STATUS` = "draft, pending clinician review"). At most 5, known catalogue codes only, in group order. Emergencies (the AI-020 rules) and text with no symptom give empty results. It never changes the parsed intent: FR-017 still holds, and the UI shows the tests as choices the person taps.
+- `TEST_INFO` / `getTestInfo(code)`: plain-language `measures` and `prepare` text for every catalogue test. General information only; it never reads or interprets a patient's values (`TEST_INFO_DISCLAIMER`).
