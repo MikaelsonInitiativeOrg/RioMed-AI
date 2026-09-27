@@ -1,19 +1,23 @@
 import Link from "next/link";
 import { getTest, isKnownTestCode } from "@riomed/backend/core/catalog";
 import { DAY_PARTS, type DayPart, type SearchIntent } from "@riomed/backend/core/intent";
-import { formatNaira } from "@riomed/backend/core/money";
 import { EmergencyBanner } from "@/components/EmergencyBanner";
 import { SearchRefine } from "@/components/SearchRefine";
-import { FACILITY_TYPE_LABEL, lagosDateTime } from "@/lib/format";
+import { FacilityCard } from "@/components/FacilityCard";
+import { EmptyState } from "@/components/EmptyState";
+import { RioMedLogo } from "@/components/Logo";
+import { ChatAccountFlow } from "@/components/ChatAccountFlow";
+import { HomeComposer } from "@/components/HomeComposer";
 import { runPromptSearch, searchWithIntent, type Found, type SearchView } from "@riomed/backend/server/search";
 
 export const dynamic = "force-dynamic";
 
-const EXAMPLES = [
-  "I need a malaria test around Ikeja tomorrow morning",
-  "abeg where I fit do typhoid and PCV for Yaba today?",
-  "Full blood count and genotype near Surulere on Saturday",
-  "chest x-ray in Maryland this evening",
+const SUGGESTIONS = [
+  { label: "Malaria test in Ikeja, tomorrow morning", text: "I need a malaria test around Ikeja tomorrow morning" },
+  { label: "Widal test near Yaba, this evening", text: "Book a widal test near Yaba this evening" },
+  { label: "Severe chest pain, can't breathe", text: "severe chest pain and I can't breathe properly" },
+  { label: "Create an account", text: "create an account" },
+  { label: "Access dashboard", text: "access dashboard" },
 ];
 
 function one(v: string | string[] | undefined): string | undefined {
@@ -27,10 +31,15 @@ export default async function Home(props: PageProps<"/">) {
   let view: (Found & { intent: SearchIntent } & Partial<Pick<SearchView, "ai" | "emergency" | "totalMs">>) | null = null;
   let error: string | null = null;
 
-  if (q) {
+  const isCreateAccountPrompt = /create.*account|sign.*up|register|new.*account/i.test(q);
+  const isAccessDashboardPrompt = /access.*dashboard|open.*dashboard|my.*dashboard|patient.*dashboard|clinic.*dashboard|facility.*dashboard|^dashboard$/i.test(q);
+  const isAccountAction = isCreateAccountPrompt || isAccessDashboardPrompt;
+  const isClinicTarget = /clinic|facility|staff|desk|lab/i.test(q);
+
+  if (q && !isAccountAction) {
     if (q.length > 1000) error = "Please keep your request under 1,000 characters.";
     else view = await runPromptSearch(q);
-  } else if (area) {
+  } else if (!isAccountAction && area) {
     const test = one(sp.test);
     const day = one(sp.day) || null;
     const partRaw = one(sp.part);
@@ -47,155 +56,243 @@ export default async function Home(props: PageProps<"/">) {
   }
 
   return (
-    <div className="space-y-5">
-      <section>
-        <h1 className="text-2xl font-bold text-emerald-900">Find, book and pay for a medical test</h1>
-        <p className="text-sm text-slate-600 mt-1">Say what you need in your own words. We show registry-listed facilities near you, and you can book and pay at partner labs.</p>
-        <form action="/" method="get" className="mt-4 flex flex-col sm:flex-row gap-2">
-          <label htmlFor="q" className="sr-only">What do you need?</label>
-          <input
-            id="q"
-            name="q"
-            defaultValue={q}
-            maxLength={1000}
-            required
-            placeholder="e.g. I need a malaria test around Ikeja tomorrow morning"
-            className="flex-1 rounded-xl border border-emerald-900/20 bg-white px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
-          />
-          <button className="rounded-xl bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-800">Search</button>
-        </form>
-        {!view && !error && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {EXAMPLES.map((e) => (
-              <Link key={e} href={`/?q=${encodeURIComponent(e)}`} className="rounded-full bg-white border border-emerald-900/15 px-3 py-1.5 text-xs text-emerald-900 hover:bg-emerald-50">
-                {e}
-              </Link>
-            ))}
+    <div className="flex-1 flex flex-col justify-between min-h-[calc(100vh-100px)] py-4 sm:py-6 px-3 sm:px-6">
+      {/* ================= CHAT / CONTENT AREA ================= */}
+      <div className="flex-1 flex flex-col justify-center">
+        {/* State 1: Empty Home State matching uploaded screenshot exactly */}
+        {!view && !error && !isAccountAction && (
+          <div className="my-auto py-8 sm:py-12 flex flex-col items-center justify-center text-center gap-5">
+            {/* Center Logo Mark (width 56, height 56) */}
+            <RioMedLogo size={56} />
+
+            {/* Main Heading in Sora */}
+            <h1 className="font-heading font-bold text-2xl sm:text-3xl md:text-[28px] text-[#0A5347] tracking-tight">
+              What do you need to find today?
+            </h1>
+
+            {/* Subheading */}
+            <p className="max-w-[460px] text-sm sm:text-[15px] text-[#4B6560] leading-relaxed -mt-1">
+              Describe the test or care you&apos;re looking for, in plain language. RioMed helps you find, book and pay — it never diagnoses.
+            </p>
+
+            {/* Suggestion Pills */}
+            <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg mt-1">
+              {SUGGESTIONS.map((s) => (
+                <Link
+                  key={s.label}
+                  href={`/?q=${encodeURIComponent(s.text)}`}
+                  className="rounded-full bg-[#F3FAF8] border border-[#CDE8E1] px-4 py-2 text-xs sm:text-[13px] font-semibold text-[#0A5347] transition hover:bg-[#CDE8E1]/60 shadow-2xs"
+                >
+                  {s.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Structured Search Accordion Option */}
+            <div className="mt-4 w-full max-w-xl text-left">
+              <details className="group rounded-2xl border border-[#E3E0D6] bg-white p-3.5 shadow-2xs transition">
+                <summary className="text-xs font-semibold text-[#0E6B5C] cursor-pointer flex items-center justify-between">
+                  <span>Prefer not to type? Search with the form</span>
+                  <span className="text-xs group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div className="mt-3 pt-3 border-t border-[#F0EEE7]">
+                  <SearchRefine title="Filter by test, area & time" />
+                </div>
+              </details>
+            </div>
           </div>
         )}
-        <p className="mt-3 text-xs text-slate-500">
-          Don&apos;t type your name, phone number or other personal details. Your text is sent to an AI service only to understand the request (not in mock mode).
-        </p>
-      </section>
 
-      {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+        {/* State 2: Account Creation or Dashboard Access Flow via Prompt */}
+        {isAccountAction && (
+          <div className="w-full max-w-3xl mx-auto space-y-6 pb-6 animate-in fade-in duration-300">
+            {/* User message bubble */}
+            <div className="flex justify-end">
+              <div className="max-w-[85%] rounded-2xl rounded-br-xs bg-[#0E6B5C] px-4 py-3 text-sm text-white shadow-xs">
+                {q}
+              </div>
+            </div>
 
-      {view && (
-        <>
-          {view.emergency?.isEmergency && <EmergencyBanner matched={view.emergency.matched} />}
+            <ChatAccountFlow
+              initialPrompt={q}
+              initialMode={isCreateAccountPrompt ? "create" : "pin"}
+              targetRole={isClinicTarget ? "facility_staff" : "patient"}
+            />
+          </div>
+        )}
 
-          {view.ai && (
-            <p className="text-xs text-slate-500">
-              {view.ai.source === "llm" && <>Understood by AI ({view.ai.mode}{view.ai.model ? ` · ${view.ai.model}` : ""}) in {view.ai.latencyMs} ms.</>}
-              {view.ai.source === "mock" && <>Mock mode: understood by the rule-based parser. No AI inference.</>}
-              {view.ai.source === "fallback" && <>AI unavailable ({view.ai.fallbackReason}), so the rule-based parser was used instead.</>}
-              {typeof view.totalMs === "number" && <> Search total: {view.totalMs} ms.</>}
-            </p>
-          )}
+        {/* State 3: Error query */}
+        {error && (
+          <div className="my-auto max-w-xl mx-auto w-full p-4 rounded-2xl border border-[#FBE9E7] bg-[#FBE9E7] text-sm text-[#8A251C]">
+            <p className="font-semibold">{error}</p>
+          </div>
+        )}
 
-          <SearchRefine
-            test={view.intent.tests[0]}
-            area={view.place?.name ?? null}
-            day={view.intent.when?.day ?? null}
-            part={view.intent.when && view.intent.when.part !== "any" ? view.intent.when.part : null}
-          />
-          {view.intent.tests.length > 1 && (
-            <p className="text-xs text-slate-600">Tests requested: {view.intent.tests.map((t) => getTest(t)?.name ?? t).join(", ")}. The form above edits the first one.</p>
-          )}
+        {/* State 4: Active Prompt Search / Results Conversation */}
+        {view && (
+          <div className="w-full max-w-3xl mx-auto space-y-6 pb-6 animate-in fade-in duration-300">
+            {/* User message bubble */}
+            {(q || area) && (
+              <div className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-xs bg-[#0E6B5C] px-4 py-3 text-sm text-white shadow-xs">
+                  {q || `Search for ${view.intent.tests[0] ?? "tests"} in ${area}`}
+                </div>
+              </div>
+            )}
 
-          {view.intent.intent === "unsupported" && !view.place && (
-            <p className="rounded-lg bg-white border p-3 text-sm">
-              I couldn&apos;t tell which test or area you mean. Pick them above. RioMed can&apos;t answer medical questions or suggest a diagnosis. Please talk to a clinician for that.
-            </p>
-          )}
-          {view.intent.tests.length === 0 && view.intent.intent !== "unsupported" && view.intent.intent !== "emergency" && view.place && (
-            <p className="rounded-lg bg-white border p-3 text-sm">
-              No specific test named. RioMed doesn&apos;t choose tests from symptoms. A clinic can advise you. Here are facilities near {view.place.name}.
-            </p>
-          )}
-          {!view.place && view.intent.intent !== "unsupported" && (
-            <p className="rounded-lg bg-white border p-3 text-sm">Where are you? Choose an area above so we can find facilities near you.</p>
-          )}
+            {/* Assistant message response */}
+            <div className="flex items-start gap-3">
+              <div className="mt-1 shrink-0">
+                <RioMedLogo size={28} />
+              </div>
 
-          {view.place && (
-            <section aria-label="Results" className="space-y-3">
-              <h2 className="font-semibold">
-                {view.results.length} facilities within {view.radiusKm} km of {view.place.name}
-              </h2>
-              {view.widened && <p className="text-xs text-amber-800">Few results nearby, so we widened the search to {view.radiusKm} km.</p>}
-              {view.results.length === 0 && (
-                <p className="rounded-lg bg-white border p-3 text-sm">No listed facility offers this within 50 km. Try another test or area.</p>
-              )}
-              {view.results.map((r) => {
-                const bookHref = `/facility/${r.id}?test=${encodeURIComponent(view!.intent.tests[0] ?? "")}${view!.window ? `&from=${view!.window.start.toISOString()}&to=${view!.window.end.toISOString()}` : ""}`;
-                return (
-                  <article key={r.id} className="rounded-xl bg-white border border-emerald-900/10 p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-semibold text-emerald-950">{r.name}</h3>
-                        <p className="text-xs text-slate-600">
-                          {FACILITY_TYPE_LABEL[r.type] ?? r.type} · {r.area} · {r.distanceKm.toFixed(1)} km
-                        </p>
+              <div className="flex-1 min-w-0 space-y-4">
+                {/* AI-020: Emergency banner MUST come first before all results */}
+                {view.emergency?.isEmergency && (
+                  <EmergencyBanner matched={view.emergency.matched} />
+                )}
+
+                {/* Normal assistant introductory bubble */}
+                {!view.emergency?.isEmergency && (
+                  <div className="rounded-2xl rounded-bl-xs border border-[#E3E0D6] bg-white p-4 text-sm text-[#12262B] shadow-2xs space-y-2">
+                    <p>
+                      Here&apos;s what I understood. Tap a chip to change it, or check nearby facilities below.
+                    </p>
+
+                    {/* AI latency & mode badge */}
+                    {view.ai && (
+                      <div className="pt-2 border-t border-[#F0EEE7] flex flex-wrap items-center gap-2 text-xs text-[#4B6560]">
+                        {view.ai.source === "mock" && (
+                          <span className="rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-[10.5px] font-bold text-[#8A6212]">
+                            MOCK AI
+                          </span>
+                        )}
+                        {view.ai.source === "llm" && (
+                          <span className="rounded-full bg-[#CDE8E1] px-2 py-0.5 text-[10.5px] font-bold text-[#0A5347]">
+                            LIVE · {view.ai.mode.toUpperCase()}
+                          </span>
+                        )}
+                        {view.ai.source === "fallback" && (
+                          <span className="rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[10.5px] font-bold text-[#8A6212]">
+                            FALLBACK
+                          </span>
+                        )}
+                        <span>
+                          {view.ai.source === "llm" && (
+                            <>Understood in {view.ai.latencyMs} ms.</>
+                          )}
+                          {view.ai.source === "mock" && (
+                            <>Mock mode: understood by rule-based parser.</>
+                          )}
+                          {view.ai.source === "fallback" && (
+                            <>AI unavailable ({view.ai.fallbackReason}), rule-based parser used.</>
+                          )}
+                          {typeof view.totalMs === "number" && (
+                            <> (Search: {view.totalMs} ms)</>
+                          )}
+                        </span>
                       </div>
-                      {r.isPartner ? (
-                        <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">Bookable</span>
-                      ) : (
-                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">Listed only</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Editable intent chips & parameter refine */}
+                <SearchRefine
+                  test={view.intent.tests[0]}
+                  area={view.place?.name ?? null}
+                  day={view.intent.when?.day ?? null}
+                  part={view.intent.when && view.intent.when.part !== "any" ? view.intent.when.part : null}
+                />
+
+                {view.intent.tests.length > 1 && (
+                  <div className="rounded-xl bg-[#F3FAF8] border border-[#0E6B5C]/20 p-3 text-xs text-[#0A5347]">
+                    <span className="font-bold">Tests requested:</span>{" "}
+                    {view.intent.tests.map((t) => getTest(t)?.name ?? t).join(", ")}. The form above edits the first one.
+                  </div>
+                )}
+
+                {/* Clarification notes */}
+                {view.intent.intent === "unsupported" && !view.place && (
+                  <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
+                    <p className="font-bold">Request clarification</p>
+                    <p className="mt-1">
+                      I couldn&apos;t tell which test or area you mean. Pick them above. RioMed can&apos;t answer medical questions or suggest a diagnosis. Please talk to a clinician for that.
+                    </p>
+                  </div>
+                )}
+
+                {view.intent.tests.length === 0 && view.intent.intent !== "unsupported" && view.intent.intent !== "emergency" && view.place && (
+                  <div className="rounded-2xl border border-[#E3E0D6] bg-white p-4 text-sm text-[#12262B]">
+                    <p className="font-bold text-[#0A5347]">General facility search</p>
+                    <p className="mt-1 text-[#4B6560]">
+                      No specific test named. RioMed doesn&apos;t choose tests from symptoms. A clinic can advise you. Here are facilities near {view.place.name}.
+                    </p>
+                  </div>
+                )}
+
+                {!view.place && view.intent.intent !== "unsupported" && (
+                  <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
+                    <p className="font-bold">Location required</p>
+                    <p className="mt-1">
+                      Where are you? Choose an area above so we can find facilities near you.
+                    </p>
+                  </div>
+                )}
+
+                {/* Facilities List */}
+                {view.place && (
+                  <section aria-label="Results" className="space-y-3 pt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                      <h2 className="font-heading text-lg font-bold text-[#0A5347] sm:text-xl">
+                        Facilities near {view.place.name}
+                      </h2>
+                      {view.widened && (
+                        <span className="text-xs font-semibold text-[#8A6212] bg-[#FFF4E5] px-2.5 py-0.5 rounded-full border border-[#C98A1D]/30">
+                          Few results nearby, search widened to {view.radiusKm} km
+                        </span>
                       )}
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      Registry record {r.nhfrId ?? "none"} · <span className="font-medium">demo data</span>
+                    <p className="text-xs text-[#8B9490]">
+                      Ranked by distance, test availability and partner status
                     </p>
-                    {r.isPartner ? (
-                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                        {view!.intent.tests.length > 0 &&
-                          (r.offersTests ? (
-                            <span>{r.minPriceKobo != null ? formatNaira(r.minPriceKobo) : "Price on request"}</span>
-                          ) : (
-                            <span className="text-amber-800">Doesn&apos;t offer all requested tests</span>
-                          ))}
-                        <span className="text-slate-700">{r.nextSlot ? `Next free: ${lagosDateTime(r.nextSlot)}` : "No free slot in this window"}</span>
-                        {r.offersTests && (
-                          <Link href={bookHref} className="ml-auto rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">
-                            See times
-                          </Link>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-sm text-slate-700">
-                        Listed in registry, booking not available.{" "}
-                        {r.phone && (
-                          <a className="underline" href={`tel:${r.phone.replace(/\s/g, "")}`}>
-                            Call {r.phone}
-                          </a>
-                        )}
-                      </p>
-                    )}
-                  </article>
-                );
-              })}
-            </section>
-          )}
-        </>
-      )}
 
-      {!view && !error && (
-        <section className="grid sm:grid-cols-3 gap-3 text-sm">
-          {[
-            ["1. Say it", "Type what you need, in English or Pidgin."],
-            ["2. Book & pay", "Pick a time at a partner lab and pay online with Paystack."],
-            ["3. Keep your result", "Your result arrives as a secure PDF in your account, not on paper."],
-          ].map(([t, d]) => (
-            <div key={t} className="rounded-xl bg-white border border-emerald-900/10 p-4">
-              <p className="font-semibold text-emerald-900">{t}</p>
-              <p className="text-slate-600 mt-1">{d}</p>
+                    {view.results.length === 0 ? (
+                      <EmptyState
+                        title="No facilities found nearby"
+                        description={`No listed facility offers this test within 50 km of ${view.place.name}. Try selecting another test or expanding to adjacent Lagos areas.`}
+                        actionHref="/?area=Ikeja"
+                        actionLabel="Search in Ikeja"
+                        hint="You can also call nearby general hospitals directly."
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        {view.results.map((r) => (
+                          <FacilityCard
+                            key={r.id}
+                            facility={r}
+                            testCode={view!.intent.tests[0]}
+                            window={view!.window}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )}
+              </div>
             </div>
-          ))}
-          <div className="sm:col-span-3">
-            <SearchRefine title="Prefer not to type? Search with the form" />
           </div>
-        </section>
-      )}
+        )}
+      </div>
+
+      {/* ================= COMPOSER (STICKY AT BOTTOM) ================= */}
+      <footer className="w-full max-w-3xl mx-auto pt-4 shrink-0">
+        <HomeComposer initialQuery={q} />
+
+        {/* Required Medical Disclaimer from screenshot & PRD AI-022 */}
+        <p className="text-center text-[10.5px] sm:text-[11px] text-[#4B6560] mt-2 mb-1">
+          RioMed helps you find and book care. It does not give medical advice.
+        </p>
+      </footer>
     </div>
   );
 }

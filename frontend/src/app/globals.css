@@ -1,11 +1,75 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sora), system-ui, sans-serif;
+  --font-sans: var(--font-public-sans), system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --teal-700: #0A5347;
+  --teal-600: #0E6B5C;
+  --teal-100: #CDE8E1;
+  --teal-50: #F3FAF8;
+  --mint: #8FE0CE;
+  --ink-900: #12262B;
+  --ink-600: #4B6560;
+  --border: #E3E0D6;
+  --border-light: #F0EEE7;
+  --bg: #F7F5F0;
+  --accent: #D96B33;
+  --danger: #C1352B;
+  --danger-100: #FBE9E7;
+  --warning: #C98A1D;
+  --warning-100: #FFF4E5;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  scroll-behavior: smooth;
+  background-color: var(--bg);
 }
 
 body {
-  background: #f6f8f7;
-  color: #10201b;
+  background-color: var(--bg);
+  color: var(--ink-900);
+  min-height: 100vh;
+  font-family: var(--font-public-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-sora), system-ui, sans-serif;
+}
+
+/* Ensure mobile form inputs never trigger unwanted zoom on iOS/Android */
+input, select, textarea {
+  font-size: 16px;
+}
+@media (min-width: 640px) {
+  input, select, textarea {
+    font-size: 0.875rem;
+  }
+}
+
+/* Accessible focus outlines matching design system */
+:focus-visible {
+  outline: 2px solid var(--teal-600);
+  outline-offset: 2px;
+}
+
+/* Text selection */
+::selection {
+  background: var(--teal-100);
+  color: var(--teal-700);
+}
+
+/* Touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
