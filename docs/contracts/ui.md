@@ -89,3 +89,4 @@ relevant to them. Change them only through a request below.
 ## Requests
 
 <!-- Frontend agent: add requests here, e.g. "- [ ] /dashboard needs the facility address per appointment". -->
+- [ ] `SearchView.results`: include facility `ownership` ("public" | "private") per result to satisfy PRD FR-022 display.

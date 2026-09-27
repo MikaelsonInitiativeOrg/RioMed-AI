@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getTest } from "@riomed/backend/core/catalog";
-import { formatNaira } from "@riomed/backend/core/money";
-import { STATUS_LABEL, lagosDateTime } from "@/lib/format";
 import { listPatientAppointments } from "@riomed/backend/server/queries";
 import { getSessionUser } from "@/lib/session";
+import { PatientDashboardTabs } from "@/components/PatientDashboardTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -13,29 +11,36 @@ export default async function Dashboard() {
   if (!actor) redirect("/demo-login?next=/dashboard");
   if (actor.role !== "patient") redirect("/staff");
   const appts = await listPatientAppointments(actor);
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-emerald-950">My bookings and results</h1>
-      {appts.length === 0 && (
-        <div className="rounded-xl bg-white border p-5 text-sm">
-          <p>No bookings yet. Here&apos;s how it works: search for a test, pick a time at a partner lab, pay, and your result will appear here.</p>
-          <Link href="/" className="mt-3 inline-block rounded-lg bg-emerald-700 px-4 py-2 text-white">Find a test</Link>
+    <div className="w-full max-w-2xl mx-auto space-y-6 pb-12">
+      {/* Dashboard Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[#0A5347]">
+            My dashboard
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-[#4B6560]">
+            Appointments, results and booking history in one place.
+          </p>
         </div>
-      )}
-      <ul className="space-y-3">
-        {appts.map((a) => (
-          <li key={a.id}>
-            <Link href={`/appointments/${a.id}`} className="block rounded-xl bg-white border border-emerald-900/10 p-4 hover:border-emerald-600">
-              <div className="flex justify-between gap-2">
-                <span className="font-semibold">{getTest(a.testCode)?.name}</span>
-                <span className="text-xs rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-900">{STATUS_LABEL[a.status]}</span>
-              </div>
-              <p className="text-sm text-slate-600">{a.facilityName} · {lagosDateTime(a.slotStart)} · {formatNaira(a.amountKobo)}</p>
-              <p className="text-xs font-mono text-slate-500 mt-1">{a.reference}{a.hasResult && " · result ready"}</p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+
+        <div className="text-right shrink-0">
+          <span className="text-xs text-[#8B9490]">Signed in as</span>
+          <p className="font-heading font-bold text-xs text-[#12262B]">
+            {actor.name}
+          </p>
+          <Link
+            href="/demo-login?next=/dashboard"
+            className="text-[11px] text-[#0E6B5C] hover:underline"
+          >
+            Switch profile
+          </Link>
+        </div>
+      </div>
+
+      {/* Tabs & Appointment Content */}
+      <PatientDashboardTabs appointments={appts} />
     </div>
   );
 }
