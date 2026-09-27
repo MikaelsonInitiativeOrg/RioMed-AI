@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Atkinson_Hyperlegible } from "next/font/google";
 import { getSessionUser } from "@/lib/session";
 import { RioMedLogo } from "@/components/Logo";
+import { paystackEnabled } from "@riomed/backend/server/paystack";
 import { BadgeCheck, Building2, CalendarCheck, FlaskConical, Info, Search, Settings, ShieldCheck, Tags, UserRound } from "lucide-react";
 import "./globals.css";
 
@@ -28,6 +29,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getSessionUser();
   const mode = (process.env.AI_PROVIDER ?? "mock").toLowerCase();
+  const paystack = paystackEnabled(); // no key: the labelled simulated checkout is used, so say so
   const displayName = user ? user.name.split(" (")[0].split(",")[0] : null;
 
   const signedInAs = user?.role === "patient" ? "patient" : user?.role === "facility_staff" || user?.role === "facility_admin" ? "facility" : user?.role === "operator" ? "operator" : null;
@@ -56,7 +58,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               Demo
             </span>
             <span aria-hidden>·</span>
-            <span><span className="sm:hidden">Test payments</span><span className="hidden sm:inline">Paystack test mode</span></span>
+            <span>
+              {paystack ? (
+                <><span className="sm:hidden">Test payments</span><span className="hidden sm:inline">Paystack test mode</span></>
+              ) : (
+                <><span className="sm:hidden">Simulated pay</span><span className="hidden sm:inline">Simulated payments</span></>
+              )}
+            </span>
             <span aria-hidden>·</span>
             <span>
               AI: <strong className="font-bold text-foreground">{mode === "mock" ? "mock" : mode}</strong>
