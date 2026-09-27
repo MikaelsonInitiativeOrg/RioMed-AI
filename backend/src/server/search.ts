@@ -90,10 +90,22 @@ export async function searchWithIntent(intent: SearchIntent, now = new Date(), d
   return { place, window, results, radiusKm: res.radiusKm, widened: res.widened };
 }
 
+/** 1–4 words of letters only, e.g. "new york", "Port Harcourt". Not a question or a sentence. */
+export function isBarePlaceName(q: string): boolean {
+  const t = q.trim();
+  return t.length >= 3 && t.length <= 40 && /^[\p{L}][\p{L} .'-]*$/u.test(t) && t.split(/\s+/).length <= 4 &&
+    !/^(hi|hello|hey|help|thanks|thank you|ok|okay|yes|no|test|book|pay|cancel|login|sign in|sign up)$/i.test(t);
+}
+
 export async function runPromptSearch(query: string, opts: { deviceOrigin?: LatLng | null } = {}): Promise<SearchView> {
   const t0 = Date.now();
   const timeoutMs = Number(process.env.AI_TIMEOUT_MS) || 1500;
   const ai = await parseIntent(query, { timeoutMs });
+  // A bare place name ("new york", "Accra") the offline parser couldn't read: look it up as a place.
+  if (!ai.emergency?.isEmergency && ai.intent.intent === "unsupported" && !ai.intent.locationQuery && !opts.deviceOrigin && isBarePlaceName(query)) {
+    const place = await geocodePlace(query, { settlementsOnly: true });
+    if (place) ai.intent = { ...ai.intent, intent: "find_facility", locationQuery: query.trim(), confidence: 0.5 };
+  }
   const found = await searchWithIntent(ai.intent, new Date(), opts.deviceOrigin ?? null);
   return {
     query,

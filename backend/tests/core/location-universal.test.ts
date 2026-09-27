@@ -58,3 +58,17 @@ describe("geocodeAddress", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("bare place names (offline fallback)", () => {
+  it("accepts short place-like text and rejects chat or sentences", async () => {
+    const { isBarePlaceName } = await import("@/server/search");
+    for (const q of ["new york", "Port Harcourt", "Accra", "São Paulo"]) expect(isBarePlaceName(q)).toBe(true);
+    for (const q of ["hi", "hello", "what is malaria?", "I feel tired all the time", "12345", "book"]) expect(isBarePlaceName(q)).toBe(false);
+  });
+  it("settlementsOnly ignores results that are not towns, cities or regions", async () => {
+    const shop = vi.fn(async () => new Response(JSON.stringify([{ lat: "1", lon: "1", name: "Hello Shop", addresstype: "shop" }]), { status: 200 }));
+    expect(await geocodePlace("Hello Shop-test-7", { fetchImpl: shop, settlementsOnly: true })).toBeNull();
+    const city = vi.fn(async () => new Response(JSON.stringify([{ lat: "40.71", lon: "-74.0", name: "New York", addresstype: "city" }]), { status: 200 }));
+    expect((await geocodePlace("New York-test-8", { fetchImpl: city, settlementsOnly: true }))?.name).toBe("New York");
+  });
+});

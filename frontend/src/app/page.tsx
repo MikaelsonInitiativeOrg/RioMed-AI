@@ -4,7 +4,6 @@ import { DAY_PARTS, type DayPart, type SearchIntent } from "@riomed/backend/core
 import { EmergencyBanner } from "@/components/EmergencyBanner";
 import { SearchRefine } from "@/components/SearchRefine";
 import { FacilityCard } from "@/components/FacilityCard";
-import { EmptyState } from "@/components/EmptyState";
 import { LiveNearby } from "@/components/LiveNearby";
 import { NearMeButton } from "@/components/NearMeButton";
 import { PromptBookCard } from "@/components/PromptBookCard";
@@ -267,17 +266,12 @@ export default async function Home(props: PageProps<"/">) {
                     </p>
 
                     {view.results.length === 0 ? (
-                      <EmptyState
-                        title="No facilities found nearby"
-                        description={
-                          view.place.name === "your location"
-                            ? "No RioMed facility near you yet. Places near you from Google Maps are listed below, and clinics can register on RioMed to take bookings."
-                            : `No RioMed facility offers this near ${view.place.name} yet. Places from Google Maps are listed below.`
-                        }
-                        actionHref="/?area=Ikeja"
-                        actionLabel="Search in Ikeja"
-                        hint="You can also call nearby general hospitals directly."
-                      />
+                      <p className="rounded-2xl border border-[#E3E0D6] bg-white p-4 text-sm text-[#4B6560]">
+                        {view.place.name === "your location"
+                          ? "No RioMed partner near you yet, so online booking isn't available here. The nearest places from Google Maps are below."
+                          : `No RioMed partner near ${view.place.name} yet, so online booking isn't available there. Places from Google Maps are below.`}{" "}
+                        Clinics can <Link href="/account?mode=signup&type=facility" className="font-semibold text-[#0E6B5C] underline">register on RioMed</Link> to take bookings.
+                      </p>
                     ) : (
                       <div className="space-y-3">
                         {view.results.map((r) => (

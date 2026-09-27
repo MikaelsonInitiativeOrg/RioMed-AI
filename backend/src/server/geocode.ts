@@ -16,16 +16,19 @@ export function geocoderEnabled(env: Record<string, string | undefined> = proces
   return (env.GEOCODER ?? "on") !== "off";
 }
 
+// Result types that are real places people live in (for bare-name queries like "new york").
+const SETTLEMENTS = new Set(["city", "town", "village", "suburb", "neighbourhood", "quarter", "borough", "city_district", "district", "county", "state", "region", "province", "country", "municipality", "hamlet"]);
+
 export async function geocodePlace(
   text: string | null | undefined,
-  opts: { env?: Record<string, string | undefined>; fetchImpl?: typeof fetch; timeoutMs?: number } = {},
+  opts: { env?: Record<string, string | undefined>; fetchImpl?: typeof fetch; timeoutMs?: number; settlementsOnly?: boolean } = {},
 ): Promise<Place | null> {
   const known = resolveLocation(text);
   if (known) return known;
   const q = typeof text === "string" ? sanitizeAddress(text) : null;
   if (!q || !geocoderEnabled(opts.env ?? process.env)) return null;
 
-  const key = q.toLowerCase();
+  const key = `${opts.settlementsOnly ? "s:" : ""}${q.toLowerCase()}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.place;
 
@@ -41,10 +44,11 @@ export async function geocodePlace(
     const lat = Number(r?.lat);
     const lng = Number(r?.lon);
     const place: Place | null =
-      r && Number.isFinite(lat) && Number.isFinite(lng)
+      r && Number.isFinite(lat) && Number.isFinite(lng) && (!opts.settlementsOnly || SETTLEMENTS.has(r.addresstype ?? ""))
         ? { name: (r.name || q).slice(0, 80), kind: r.addresstype === "state" || r.addresstype === "country" ? "state" : "area", lat, lng }
         : null;
     cache.set(key, { at: Date.now(), place });
+    if (place && opts.settlementsOnly) cache.set(q.toLowerCase(), { at: Date.now(), place }); // the follow-up search reuses it
     if (cache.size > 1000) cache.delete(cache.keys().next().value!);
     return place;
   } catch {
