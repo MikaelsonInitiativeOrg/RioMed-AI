@@ -1,5 +1,5 @@
 import "server-only";
-import type { LatLng } from "../core/geo";
+import { nearestPlace, type LatLng } from "../core/geo";
 
 /**
  * FR-027 (added 2026-09-27): live nearby health facilities from Google Maps, via Gemini's
@@ -93,8 +93,11 @@ export async function findLivePlaces(
 ): Promise<LivePlacesResult> {
   const env = opts.env ?? process.env;
   if (!livePlacesEnabled(env)) return { status: "disabled", places: [], reason: "Live search needs AI_PROVIDER=gemini and a key" };
-  // With a shared device location and no typed address, search around the coordinates.
-  const address = sanitizeAddress(input.address) ?? (input.origin ? "the user's current location" : null);
+  // With a shared device location and no typed address: name the nearest known area (fast, reliable),
+  // else search by coordinates alone (slower, works anywhere). The coordinates still bias the tool.
+  const typed = sanitizeAddress(input.address);
+  const near = !typed && input.origin ? nearestPlace(input.origin) : null;
+  const address = typed ?? (near ? `${near.name}, Lagos` : input.origin ? "the user's current location" : null);
   if (!address) return { status: "unavailable", places: [], reason: "No address" };
 
   const key = `${address.toLowerCase()}|${input.origin ? `${input.origin.lat.toFixed(3)},${input.origin.lng.toFixed(3)}` : ""}`;
@@ -111,7 +114,7 @@ export async function findLivePlaces(
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.AI_API_KEY! },
       body: JSON.stringify({
         model,
-        input: input.origin && !sanitizeAddress(input.address)
+        input: input.origin && !typed && !near
           ? // Device location: search around the exact coordinates, wherever they are.
             `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres closest to latitude ${input.origin.lat}, longitude ${input.origin.lng}. Only medical facilities, nearest first.`
           : `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres near this location in Nigeria: ${address}. Only medical facilities.`,

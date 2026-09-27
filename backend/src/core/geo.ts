@@ -72,3 +72,18 @@ export function resolveLocation(query: string | null | undefined): Place | null 
   })[0];
   return best.value;
 }
+
+/** Nearest known area or LGA to a point, if within maxKm (default 10). State-level entries are ignored. */
+export function nearestPlace(origin: LatLng, maxKm = 10): Place | null {
+  let best: Place | null = null;
+  let bestKm = Infinity;
+  for (const p of PLACES) {
+    if (p.kind === "state") continue;
+    const d = haversineKm(origin, p);
+    if (d < bestKm) {
+      best = p;
+      bestKm = d;
+    }
+  }
+  return best && bestKm <= maxKm ? best : null;
+}

@@ -55,6 +55,8 @@ export function haversineKm(a: LatLng, b: LatLng): number; // great-circle dista
 export interface Place extends LatLng { name: string; kind: "area" | "lga" | "state" }
 export const PLACES: readonly Place[];
 export function resolveLocation(query: string | null | undefined): Place | null;
+/** Nearest area or LGA (never the state) within maxKm (default 10), else null. Added 2026-09-27. */
+export function nearestPlace(origin: LatLng, maxKm?: number): Place | null;
 ```
 
 `resolveLocation` matches case-insensitively on whole words and returns the **longest** place
