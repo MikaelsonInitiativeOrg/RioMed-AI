@@ -40,64 +40,67 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {/* Required Hackathon Demo Banner */}
         <aside
           aria-label="Demo environment status"
-          className="bg-[#FFF4E5] border-b border-[#E3E0D6] text-[#8A6212] text-[11px] sm:text-xs text-center px-3 py-1 font-medium"
+          className="bg-[#FFF4E5] border-b border-[#E3E0D6] text-[#8A6212] text-[10.5px] sm:text-xs text-center px-3 py-1 font-medium"
         >
           <div className="mx-auto max-w-4xl flex items-center justify-center gap-1.5 flex-wrap">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#C98A1D]" aria-hidden="true" />
-            <span>Hackathon demo · synthetic facilities and patients · Paystack test mode only · AI mode:</span>
-            <strong className="font-semibold">
-              {mode === "mock" ? "MOCK (no AI inference)" : mode}
+            <span>Hackathon demo · Paystack test mode · AI mode:</span>
+            <strong className="font-semibold uppercase">
+              {mode === "mock" ? "MOCK" : mode}
             </strong>
           </div>
         </aside>
 
         {/* Official Medical Chat Topbar */}
         <header className="sticky top-0 z-30 bg-white border-b border-[#E3E0D6] flex-shrink-0">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
-            <div className="flex h-14 items-center justify-between gap-3">
-              {/* Brand Logo & Wordmark matching screenshot */}
+          <div className="mx-auto max-w-4xl px-3 sm:px-6">
+            <div className="flex h-14 items-center justify-between gap-2">
+              {/* Brand Logo & Wordmark */}
               <Link
                 href="/"
-                className="flex items-center gap-2.5 font-heading font-bold text-base text-[#0A5347] tracking-tight min-h-[44px] -ml-1 pl-1 pr-2 rounded-lg focus-visible:ring-2 focus-visible:ring-[#0E6B5C]"
+                className="flex items-center gap-2 font-heading font-bold text-sm sm:text-base text-[#0A5347] tracking-tight min-h-[44px] pr-1 rounded-lg focus-visible:ring-2 focus-visible:ring-[#0E6B5C] shrink-0"
                 aria-label="RioMed AI Home"
               >
-                <RioMedLogo size={28} />
+                <RioMedLogo size={26} />
                 <span>
                   RioMed <span className="text-[#0E6B5C]">AI</span>
                 </span>
               </Link>
 
-              {/* Right section: Navigation links + AI status pill matching screenshot */}
-              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+              {/* Right Navigation & Status Pill */}
+              <div className="flex items-center gap-1.5 sm:gap-3 text-xs sm:text-sm">
                 <nav aria-label="Main Navigation" className="flex items-center gap-1 sm:gap-2">
                   {user?.role === "patient" && (
                     <Link
                       href="/dashboard"
-                      className="inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                      className="inline-flex min-h-[36px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
                     >
-                      My bookings
+                      <span className="sm:hidden">Bookings</span>
+                      <span className="hidden sm:inline">My bookings</span>
                     </Link>
                   )}
 
                   {(user?.role === "facility_staff" || user?.role === "facility_admin") && (
                     <Link
                       href="/staff"
-                      className="inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                      className="inline-flex min-h-[36px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
                     >
-                      Facility desk
+                      <span className="sm:hidden">Desk</span>
+                      <span className="hidden sm:inline">Facility desk</span>
                     </Link>
                   )}
 
                   <Link
                     href="/about"
-                    className="inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                    className="hidden sm:inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
                   >
                     How it works
                   </Link>
 
                   <Link
                     href="/demo-login"
-                    className="inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
+                    className="inline-flex min-h-[36px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#0E6B5C] bg-[#F3FAF8] border border-[#0E6B5C]/20 hover:bg-[#CDE8E1]/50 transition max-w-[90px] sm:max-w-[140px] truncate"
+                    title={displayName ?? "Sign in"}
                   >
                     {displayName ? displayName : "Sign in"}
                   </Link>
@@ -105,11 +108,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
                 {/* Status Badge from screenshot */}
                 {mode === "mock" ? (
-                  <span className="rounded-full border border-dashed border-[#C98A1D] bg-white px-2.5 py-1 text-[11px] font-bold text-[#8A6212] tracking-wide">
+                  <span className="hidden xs:inline-flex rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-[#8A6212] tracking-wide shrink-0">
                     MOCK AI
                   </span>
                 ) : (
-                  <span className="rounded-full bg-[#CDE8E1] px-2.5 py-1 text-[11px] font-bold text-[#0A5347] tracking-wide">
+                  <span className="hidden xs:inline-flex rounded-full bg-[#CDE8E1] px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-[#0A5347] tracking-wide shrink-0">
                     LIVE · {mode.toUpperCase()}
                   </span>
                 )}
@@ -119,9 +122,36 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </header>
 
         {/* Main Content Area */}
-        <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 flex flex-col">
+        <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 flex flex-col px-3 sm:px-6">
           {children}
         </main>
+
+        {/* Mobile-Friendly Bottom Quick Bar (Viewport < 640px) */}
+        <nav
+          aria-label="Mobile Navigation"
+          className="sm:hidden sticky bottom-0 z-30 bg-white/95 backdrop-blur-xs border-t border-[#E3E0D6] px-3 py-1 flex items-center justify-around text-[10px] text-[#4B6560]"
+        >
+          <Link href="/" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
+            <span className="text-base leading-none">🔍</span>
+            <span className="mt-0.5 font-semibold">Search</span>
+          </Link>
+          <Link href="/dashboard" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
+            <span className="text-base leading-none">📋</span>
+            <span className="mt-0.5 font-semibold">Dashboard</span>
+          </Link>
+          <Link href="/staff" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
+            <span className="text-base leading-none">🏥</span>
+            <span className="mt-0.5 font-semibold">Facility</span>
+          </Link>
+          <Link href="/audit" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
+            <span className="text-base leading-none">🛡️</span>
+            <span className="mt-0.5 font-semibold">Audit</span>
+          </Link>
+          <Link href="/privacy" className="flex flex-col items-center py-1 min-h-[44px] justify-center hover:text-[#0A5347]">
+            <span className="text-base leading-none">⚙️</span>
+            <span className="mt-0.5 font-semibold">Privacy</span>
+          </Link>
+        </nav>
       </body>
     </html>
   );

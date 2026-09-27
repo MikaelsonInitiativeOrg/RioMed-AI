@@ -140,13 +140,13 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                   <span>Results</span>
                 </a>
 
-                <a
-                  href="#catalogue"
+                <Link
+                  href="/staff/catalogue"
                   className="flex items-center gap-2 text-[#CDE8E1] hover:text-white hover:bg-white/5 text-xs rounded-lg px-3 py-2 transition"
                 >
                   <span>🏷️</span>
                   <span>Catalogue &amp; prices</span>
-                </a>
+                </Link>
 
                 <a
                   href="#staff"

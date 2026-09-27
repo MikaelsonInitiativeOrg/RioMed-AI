@@ -3,12 +3,13 @@ import { notFound, redirect } from "next/navigation";
 import { getTest } from "@riomed/backend/core/catalog";
 import { formatNaira } from "@riomed/backend/core/money";
 import { cancelAction, payAction } from "@/app/actions";
-import { lagosDateTime, lagosTimeOnly } from "@/lib/format";
+import { lagosDateTime } from "@/lib/format";
 import { resultLink } from "@riomed/backend/server/auth";
 import { getAppointmentForActor } from "@riomed/backend/server/queries";
 import { paystackEnabled } from "@riomed/backend/server/paystack";
 import { getSessionUser } from "@/lib/session";
 import { StatusBadge } from "@/components/StatusBadge";
+import { HoldCountdown } from "@/components/HoldCountdown";
 
 export const dynamic = "force-dynamic";
 
@@ -23,19 +24,19 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
   const error = typeof sp.error === "string" ? sp.error : sp.payment === "failed" ? "Payment was not confirmed. You can try again while your hold lasts." : null;
 
   return (
-    <div className="space-y-5">
+    <div className="w-full max-w-2xl mx-auto space-y-5 pb-16">
       {/* Back link */}
       <div>
         <Link
           href={actor.role === "patient" ? "/dashboard" : "/staff"}
           className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-[#0E6B5C] hover:text-[#0A5347] transition"
         >
-          ← Back
+          ← Back to {actor.role === "patient" ? "Dashboard" : "Facility Desk"}
         </Link>
       </div>
 
       {/* Main Appointment Pass */}
-      <section className="rounded-2xl border border-[#E3E0D6] bg-white p-5 sm:p-6 shadow-xs space-y-4">
+      <section className="rounded-2xl border border-[#E3E0D6] bg-white p-5 sm:p-7 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#F0EEE7]">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#4B6560]">
@@ -50,24 +51,24 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
           </div>
         </div>
 
-        {/* Appointment Key-Value Details */}
+        {/* Key Appointment Details */}
         <div className="space-y-3">
-          <div className="flex justify-between items-center text-sm py-1 border-b border-[#F0EEE7]">
+          <div className="flex justify-between items-center text-sm py-1.5 border-b border-[#F0EEE7]">
             <span className="text-[#4B6560]">Test</span>
             <span className="font-bold text-[#12262B]">{getTest(a.testCode)?.name ?? a.testCode}</span>
           </div>
 
-          <div className="flex justify-between items-center text-sm py-1 border-b border-[#F0EEE7]">
+          <div className="flex justify-between items-center text-sm py-1.5 border-b border-[#F0EEE7]">
             <span className="text-[#4B6560]">Facility</span>
             <span className="font-semibold text-[#12262B] text-right">{a.facility.name}</span>
           </div>
 
-          <div className="flex justify-between items-start text-sm py-1 border-b border-[#F0EEE7]">
+          <div className="flex justify-between items-start text-sm py-1.5 border-b border-[#F0EEE7]">
             <span className="text-[#4B6560]">Address</span>
             <span className="text-xs text-[#4B6560] text-right max-w-xs">{a.facility.address}</span>
           </div>
 
-          <div className="flex justify-between items-center text-sm py-1 border-b border-[#F0EEE7]">
+          <div className="flex justify-between items-center text-sm py-1.5 border-b border-[#F0EEE7]">
             <span className="text-[#4B6560]">Scheduled time</span>
             <span className="font-semibold text-[#12262B]">{lagosDateTime(a.slotStart)}</span>
           </div>
@@ -94,20 +95,10 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
         </div>
       )}
 
-      {/* Unpaid / Hold Action Box */}
+      {/* Unpaid / Hold Action Box with Live Countdown */}
       {unpaid && a.isOwner && (
         <section className="space-y-4">
-          <div className="rounded-2xl border border-[#0E6B5C] bg-[#F3FAF8] p-4 flex items-center gap-3">
-            <span className="text-xl" aria-hidden="true">⏱</span>
-            <div>
-              <div className="font-heading font-bold text-sm text-[#0A5347]">
-                Slot held — pay within {lagosTimeOnly(a.holdExpiresAt)}
-              </div>
-              <div className="text-xs text-[#4B6560]">
-                Released automatically if payment doesn&apos;t arrive in time
-              </div>
-            </div>
-          </div>
+          <HoldCountdown expiresAt={a.holdExpiresAt} />
 
           <div className="space-y-2">
             <form action={payAction}>
@@ -159,7 +150,7 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
         <div className="rounded-2xl border border-[#0E6B5C]/30 bg-[#F3FAF8] p-4 text-sm text-[#0A5347]">
           <p className="font-bold">Show this reference at the front desk</p>
           <p className="mt-0.5 text-xs sm:text-sm text-[#4B6560]">
-            We&apos;ll send your result here when it&apos;s ready.
+            The clinic receptionist will verify reference <strong className="font-mono text-[#0A5347]">{a.reference}</strong> and check you in. Results will be uploaded directly to your RioMed account.
           </p>
         </div>
       )}
@@ -167,9 +158,17 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
       {/* Results Vault Section */}
       {a.results.length > 0 && (
         <section className="rounded-2xl border border-[#E3E0D6] bg-white p-5 sm:p-6 shadow-xs space-y-4">
-          <h2 className="font-heading text-base sm:text-lg font-bold text-[#0A5347]">
-            Results
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-base sm:text-lg font-bold text-[#0A5347]">
+              Laboratory Results
+            </h2>
+            <Link
+              href={`/appointments/${a.id}/result`}
+              className="rounded-lg bg-[#0E6B5C] text-white px-3.5 py-1.5 text-xs font-heading font-bold hover:bg-[#0A5347] transition shadow-xs"
+            >
+              Open Result Viewer →
+            </Link>
+          </div>
 
           <div className="rounded-xl bg-[#FFF4E5] text-[#8A6212] p-3 text-xs font-semibold">
             This link expires in 5 minutes
@@ -197,14 +196,20 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
                   </p>
                 </div>
 
-                <div>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/appointments/${a.id}/result`}
+                    className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#0E6B5C] bg-white px-4 py-2 text-xs font-heading font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] transition"
+                  >
+                    View Report
+                  </Link>
                   <a
                     href={resultLink(r.id)}
                     target="_blank"
                     rel="noopener"
-                    className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center rounded-xl bg-[#0E6B5C] px-5 py-2.5 text-xs sm:text-sm font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] transition"
+                    className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#0E6B5C] px-4 py-2 text-xs font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] transition"
                   >
-                    Open PDF
+                    Download PDF
                   </a>
                 </div>
               </li>
