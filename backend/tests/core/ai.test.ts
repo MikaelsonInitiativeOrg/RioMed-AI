@@ -15,8 +15,10 @@ const MODEL_INTENT: SearchIntent = {
   confidence: 0.9,
 };
 
-// Text the deterministic parser would NOT turn into MODEL_INTENT, so "llm" vs "fallback" is observable.
-const USER_TEXT = "abeg I wan check for fever for mainland side";
+// Text the deterministic parser would NOT turn into MODEL_INTENT (misspelled "malria" is not a
+// synonym, and no place is named), so "llm" vs "fallback" is observable. It still names the test
+// for the FR-017 guard (isTestMentioned allows small misspellings), so MALARIA_MP survives.
+const USER_TEXT = "abeg I wan do malria test for mainland side";
 
 const geminiBody = (text: string) => ({ candidates: [{ content: { parts: [{ text }] } }] });
 const openaiBody = (text: string) => ({ choices: [{ message: { content: text } }] });
@@ -377,10 +379,88 @@ describe("parseIntent: emergency overrides the model", () => {
     expect(r2.emergency.isEmergency).toBe(true);
   });
 
-  it("does not report an emergency for an ordinary prompt when the model claims emergency", async () => {
-    const f = mockFetch(() => jsonResponse(geminiBody(JSON.stringify({ ...MODEL_INTENT, intent: "emergency" }))));
-    const r = await parseIntent(USER_TEXT, { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+  // The model may ADD an emergency but never remove one (contract change 2026-09-27).
+  const MISSED_BY_RULES = "my pikin no dey wake since morning, abeg help";
+  const modelSaysEmergency = { ...MODEL_INTENT, intent: "emergency", tests: [] };
+
+  it("rules miss, model says emergency (llm source): flagged as ai-flagged", async () => {
+    const f = mockFetch(() => jsonResponse(geminiBody(JSON.stringify(modelSaysEmergency))));
+    const r = await parseIntent(MISSED_BY_RULES, { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+    expect(r.source).toBe("llm");
+    expect(r.emergency).toEqual({ isEmergency: true, matched: ["ai-flagged"] });
+    expect(r.intent.intent).toBe("emergency");
+  });
+
+  it("groq: the same ai-flagged rule applies", async () => {
+    const f = mockFetch(() => jsonResponse(openaiBody(JSON.stringify(modelSaysEmergency))));
+    const r = await parseIntent(MISSED_BY_RULES, { env: groqEnv, fetchImpl: f as unknown as FetchFn });
+    expect(r.source).toBe("llm");
+    expect(r.emergency).toEqual({ isEmergency: true, matched: ["ai-flagged"] });
+    expect(r.intent.intent).toBe("emergency");
+  });
+
+  it("rules match, model says find_test: still an emergency with the rule phrases (model cannot remove it)", async () => {
+    const f = mockFetch(() => jsonResponse(geminiBody(JSON.stringify(MODEL_INTENT))));
+    const r = await parseIntent("chest pain, malaria test in Yaba", { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+    expect(r.emergency.isEmergency).toBe(true);
+    expect(r.emergency.matched).toContain("chest pain");
+    expect(r.emergency.matched).not.toContain("ai-flagged");
+    expect(r.intent.intent).toBe("emergency");
+  });
+
+  it("rules match and model also says emergency: rule phrases are kept", async () => {
+    const f = mockFetch(() => jsonResponse(geminiBody(JSON.stringify(modelSaysEmergency))));
+    const r = await parseIntent("my baby dey convulse", { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+    expect(r.emergency.isEmergency).toBe(true);
+    expect(r.emergency.matched).toContain("convulse");
+    expect(r.intent.intent).toBe("emergency");
+  });
+
+  it("rules miss, model says find_test: not an emergency", async () => {
+    const f = mockFetch(() => jsonResponse(geminiBody(JSON.stringify(MODEL_INTENT))));
+    const r = await parseIntent(MISSED_BY_RULES, { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+    expect(r.source).toBe("llm");
+    expect(r.emergency).toEqual({ isEmergency: false, matched: [] });
+    expect(r.intent.intent).not.toBe("emergency");
+  });
+
+  it("a model that times out does not flag an emergency (fallback: rules only)", async () => {
+    const never = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_res, rej) =>
+          init?.signal?.addEventListener("abort", () => rej(new DOMException("Aborted", "AbortError"))),
+        ),
+    );
+    const r = await parseIntent(MISSED_BY_RULES, { env: geminiEnv, fetchImpl: never as unknown as FetchFn, timeoutMs: 30 });
+    expect(r.source).toBe("fallback");
     expect(r.emergency.isEmergency).toBe(false);
+    expect(r.emergency.matched).not.toContain("ai-flagged");
+    expect(r.intent).toEqual(parseDeterministic(MISSED_BY_RULES));
+  });
+
+  it("an invalid model response claiming emergency does not flag (fallback: rules only)", async () => {
+    const f = mockFetch(() => jsonResponse(geminiBody(JSON.stringify({ ...modelSaysEmergency, confidence: 7 }))));
+    const r = await parseIntent(MISSED_BY_RULES, { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+    expect(r.source).toBe("fallback");
+    expect(r.emergency.isEmergency).toBe(false);
+    expect(r.intent.intent).not.toBe("emergency");
+  });
+
+  it("a non-2xx response carrying an emergency intent does not flag", async () => {
+    const f = mockFetch(() => jsonResponse(geminiBody(JSON.stringify(modelSaysEmergency)), 500));
+    const r = await parseIntent(MISSED_BY_RULES, { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+    expect(r.source).toBe("fallback");
+    expect(r.emergency.isEmergency).toBe(false);
+  });
+
+  it("mock mode: only the rules count", async () => {
+    const r = await parseIntent(MISSED_BY_RULES, { env: {} });
+    expect(r.source).toBe("mock");
+    expect(r.emergency.isEmergency).toBe(false);
+    const r2 = await parseIntent("my baby dey convulse", { env: {} });
+    expect(r2.emergency.isEmergency).toBe(true);
+    expect(r2.emergency.matched).toContain("convulse");
+    expect(r2.emergency.matched).not.toContain("ai-flagged");
   });
 });
 
@@ -391,5 +471,73 @@ describe("parseIntent: prompt injection is data, not instructions", () => {
     expect(Object.keys(r.intent).sort()).toEqual(
       ["confidence", "facilityType", "intent", "locationQuery", "tests", "when"].sort(),
     );
+  });
+});
+
+describe("parseIntent: no tests from symptoms (FR-017 guard)", () => {
+  const llm = (intent: Partial<SearchIntent>) =>
+    mockFetch(() => jsonResponse(geminiBody(JSON.stringify({ ...MODEL_INTENT, ...intent }))));
+  const run = (text: string, f: ReturnType<typeof mockFetch>) =>
+    parseIntent(text, { env: geminiEnv, fetchImpl: f as unknown as FetchFn });
+
+  it("symptom-only prompt: model tests are dropped and intent becomes unsupported", async () => {
+    const f = llm({ tests: ["MALARIA_MP", "WIDAL"], locationQuery: null, facilityType: null, when: null });
+    const r = await run("I have fever and headache", f);
+    expect(r.source).toBe("llm");
+    expect(r.intent.tests).toEqual([]);
+    expect(r.intent.intent).toBe("unsupported");
+  });
+
+  it("symptom-only prompt with a place: intent becomes find_facility", async () => {
+    const f = llm({ tests: ["MALARIA_MP", "WIDAL"], locationQuery: "Yaba", facilityType: null });
+    const r = await run("I have fever and headache, I dey Yaba", f);
+    expect(r.source).toBe("llm");
+    expect(r.intent.tests).toEqual([]);
+    expect(r.intent.intent).toBe("find_facility");
+    expect(r.intent.locationQuery).toBe("Yaba");
+  });
+
+  it("symptom-only prompt with a facility type: intent becomes find_facility", async () => {
+    const f = llm({ tests: ["MALARIA_MP"], locationQuery: null, facilityType: "clinic" });
+    const r = await run("fever and headache, which clinic?", f);
+    expect(r.intent.tests).toEqual([]);
+    expect(r.intent.intent).toBe("find_facility");
+  });
+
+  it("drops a test inferred from a symptom description", async () => {
+    const f = llm({ tests: ["PREGNANCY"], locationQuery: null, facilityType: null, when: null });
+    const r = await run("I missed my period", f);
+    expect(r.intent.tests).toEqual([]);
+    expect(r.intent.intent).toBe("unsupported");
+  });
+
+  it("keeps misspelled tests the text does name", async () => {
+    const r1 = await run("abeg I wan do tyfoid test", llm({ tests: ["WIDAL"] }));
+    expect(r1.source).toBe("llm");
+    expect(r1.intent.tests).toEqual(["WIDAL"]);
+    expect(r1.intent.intent).toBe("find_test");
+    const r2 = await run("ful blood count and malria test", llm({ tests: ["FBC", "MALARIA_MP"] }));
+    expect(r2.intent.tests).toEqual(["FBC", "MALARIA_MP"]);
+    expect(r2.intent.intent).toBe("find_test");
+  });
+
+  it("keeps named tests and drops only the unnamed ones", async () => {
+    const r = await run("malria test please, I also have fever", llm({ tests: ["MALARIA_MP", "WIDAL"] }));
+    expect(r.intent.tests).toEqual(["MALARIA_MP"]);
+    expect(r.intent.intent).toBe("find_test");
+  });
+
+  it("a model find_facility with unnamed tests keeps its intent and loses the tests", async () => {
+    const r = await run("hospital around Yaba", llm({ intent: "find_facility", tests: ["FBC"], facilityType: "hospital" }));
+    expect(r.intent.tests).toEqual([]);
+    expect(r.intent.intent).toBe("find_facility");
+  });
+
+  it("emergency rules still apply on top of the guard", async () => {
+    const r = await run("chest pain and fever since morning", llm({ tests: ["MALARIA_MP"], locationQuery: null }));
+    expect(r.intent.tests).toEqual([]);
+    expect(r.intent.intent).toBe("emergency");
+    expect(r.emergency.isEmergency).toBe(true);
+    expect(r.emergency.matched).toContain("chest pain");
   });
 });

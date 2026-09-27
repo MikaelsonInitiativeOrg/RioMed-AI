@@ -11,8 +11,11 @@ const PHRASES = [
   "heavy bleeding",
   "bleeding heavily",
   "unconscious",
+  "unresponsive",
   "seizure",
   "convulsion",
+  "convulse",
+  "convulsed",
   "fitting",
   "stroke",
   "slurred speech",
@@ -54,6 +57,14 @@ describe("detectEmergency: red-flag phrases", () => {
       expect(r.isEmergency, v).toBe(true);
       expect(r.matched, v).toContain("can't breathe");
     }
+  });
+
+  it("matches the live-test prompt \"my baby dey convulse\"", () => {
+    const r = detectEmergency("my baby dey convulse");
+    expect(r.isEmergency).toBe(true);
+    expect(r.matched).toContain("convulse");
+    expect(detectEmergency("She CONVULSED last night").matched).toContain("convulsed");
+    expect(detectEmergency("he is unresponsive").matched).toContain("unresponsive");
   });
 
   it("lists several matched phrases when several occur", () => {

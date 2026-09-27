@@ -11,3 +11,6 @@ Read this at the start of every session. Add a line whenever something bites, an
 | `server-only` modules crash under plain `tsx` | Run server scripts with `npx tsx --conditions=react-server` |
 | Backend files imported by the frontend resolve `@/…` against the frontend tsconfig | Inside `backend/src`, use relative imports only. `@/` in backend is for tests only |
 | Moving `.env` breaks Prisma and Next separately | Prisma reads `backend/.env`, and Next reads `frontend/.env.local`. SQLite `file:./dev.db` resolves relative to `backend/prisma/` |
+| The live model recommended tests from symptoms ("fever" became malaria + typhoid) even though the prompt forbade it | Enforce safety rules on model output in code (isTestMentioned), not only in the prompt |
+| "Grounding with Google Maps" returned an empty 404 on generateContent | Maps grounding needs the Interactions API (`/v1beta/interactions`, tool `{type:"google_maps"}`) |
+| Two agents editing the same working folder | Each agent uses its own clone or worktree. Never share a working tree |

@@ -13,7 +13,7 @@ export interface SearchView {
   intent: SearchIntent;
   place: Place | null;
   window: TimeWindow | null;
-  results: Array<RankedFacility & { type: string; area: string; address: string; phone: string | null; nhfrId: string | null; minPriceKobo: number | null; nextSlot: Date | null }>;
+  results: Array<RankedFacility & { type: string; ownership: "public" | "private"; area: string; address: string; phone: string | null; nhfrId: string | null; minPriceKobo: number | null; nextSlot: Date | null }>;
   radiusKm: number;
   widened: boolean;
   totalMs: number;
@@ -63,6 +63,7 @@ export async function searchWithIntent(intent: SearchIntent, now = new Date()): 
     return {
       ...r,
       type: f.type,
+      ownership: (f.ownership === "public" ? "public" : "private") as "public" | "private",
       area: f.area,
       address: f.address,
       phone: f.phone,

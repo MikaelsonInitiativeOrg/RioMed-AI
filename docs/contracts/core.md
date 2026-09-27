@@ -109,7 +109,26 @@ export interface TimeWindow { start: Date; end: Date }
 export function resolveWhen(when: When | null, now: Date): TimeWindow | null;
 
 export const RED_FLAG_STATUS: "draft-pending-clinician-review";
+
+/** FR-017 guard (added 2026-09-27): true if the text names this catalogue test through its
+ *  name or a synonym, allowing small misspellings. Every word of the phrase must match a
+ *  word in the text: exactly for words of 3 characters or fewer, within edit distance 1 for
+ *  4–5 characters, and within 2 for 6 or more. Multi-word abbreviations such as "e/u/cr" also
+ *  match with the punctuation removed. False for unknown codes and non-string text. Never throws. */
+export function isTestMentioned(code: string, text: string): boolean;
 ```
+
+Examples:
+
+| Text | Code | Result |
+| --- | --- | --- |
+| "I have fever and headache" | `MALARIA_MP` or `WIDAL` | false |
+| "I missed my period" | `PREGNANCY` | false |
+| "abeg I wan do tyfoid test" | `WIDAL` | true |
+| "malria test" | `MALARIA_MP` | true |
+| "ful blood count" | `FBC` | true |
+| "I need E/U/Cr" | `EUCR` | true |
+| "LFT for my dad" | `LFT` | true |
 
 ### Rules for `parseDeterministic(text)`
 
@@ -144,7 +163,7 @@ export const RED_FLAG_STATUS: "draft-pending-clinician-review";
   words or phrases.
 - At minimum it matches: "chest pain", "difficulty breathing", "can't breathe", "cannot
   breathe", "shortness of breath", "not breathing", "heavy bleeding", "bleeding heavily",
-  "unconscious", "seizure", "convulsion", "fitting", "stroke", "slurred speech", "suicide", "kill
+  "unconscious", "unresponsive", "seizure", "convulsion", "convulse", "convulsed", "fitting", "stroke", "slurred speech", "suicide", "kill
   myself", "end my life", "overdose", "poisoning", "snake bite", "severe burn".
 - `matched` lists the canonical phrases that matched.
 - Ordinary requests such as "malaria test in Ikeja" or "blood sugar test" MUST NOT match.
@@ -316,6 +335,10 @@ export function parseIntent(
   message starts with `"INVALID_INPUT"`.
 - Emergency detection (`detectEmergencySafe`) always runs first and does not depend on the
   model. If it matches, `intent.intent` is `"emergency"`, whatever the model says.
+- The model can **add** an emergency but never remove one. If `source` is `"llm"`, the model
+  returned intent `"emergency"`, and the rules did not match, then `emergency` is
+  `{ isEmergency: true, matched: ["ai-flagged"] }`. (Added 2026-09-27: "my baby dey convulse" was
+  missed by the rules.)
 - **mock:** makes no network call. Returns `parseDeterministic` with `source: "mock"`.
 - **Other modes:**
   - Calls the provider with `fetchImpl` (default `fetch`). The key comes from `env.AI_API_KEY`
@@ -326,9 +349,43 @@ export function parseIntent(
     (localhost, 127.0.0.1 or ::1), and no credentials or query. Otherwise it falls back.
   - A missing key (gemini, groq) or missing model falls back, with no network call.
   - The model output goes through `validateModelIntent`.
+- **No tests from symptoms (FR-017, added 2026-09-27):** after validation, any model test code
+  for which `isTestMentioned(code, text)` is false is removed.
+  - If that leaves no tests and the model said `find_test`, the intent becomes `find_facility`
+    when there is a locationQuery or facilityType, and `unsupported` otherwise.
+  - The emergency rules still apply on top.
 - **Fallback:** a timeout (default 1,500 ms), non-2xx response, network error, invalid JSON or
   invalid shape gives `source: "fallback"` with the `parseDeterministic` result and a
   `fallbackReason`. It never rejects in these cases, and it makes **no retry** (at most one fetch
   call per `parseIntent`).
 - The prompt text sent to the provider contains the user text, but no user id, phone number or
   coordinates.
+
+## `@riomed/backend/server/livePlaces` (pure parts, FR-027)
+
+```ts
+export interface LivePlace { placeId: string; name: string; mapsUrl: string }
+/** Parse a Gemini Interactions API response. Only places from steps of type
+ *  "google_maps_result" (result[].places[] with string place_id, name and url) are used.
+ *  The model's prose is never used. */
+export function extractPlaces(json: unknown): LivePlace[];
+export function sanitizeAddress(raw: string): string | null;
+export function livePlacesEnabled(env?: Record<string, string | undefined>): boolean;
+```
+
+- **`extractPlaces`:**
+  - URLs must be https on maps.google.com, www.google.com or google.com. Places with any other
+    URL are dropped.
+  - Places are deduplicated by place_id, and a trailing " - Google Maps" is stripped from the
+    name. Names are capped at 120 characters.
+  - If any `model_output` step has `place_citation` annotations whose place_id is among the
+    found places, only the cited places are returned, in citation order. Otherwise all found
+    places are returned in their original order.
+  - At most 10 places are returned.
+  - Malformed input gives `[]`. It never throws.
+- **`sanitizeAddress`:** removes control characters and `< > { } \` " \\`, collapses whitespace,
+  trims, and caps the result at 120 characters. Returns null if the result is shorter than 2
+  characters.
+- **`livePlacesEnabled`:** true only when `AI_PROVIDER` is "gemini", `AI_API_KEY` is set, and
+  `LIVE_PLACES` is not "off".
+- **`findLivePlaces`:** network code. It is not unit-tested beyond these pure parts.

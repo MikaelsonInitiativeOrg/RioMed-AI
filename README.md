@@ -23,10 +23,26 @@ simulation when no key is set.
 If the model is slow (over 1.5 s), rate-limited or down, a deterministic parser answers and
 search keeps working. Mock mode, with no AI inference, is the default and is labelled in the UI.
 
-**Evaluation:** 120 hand-labelled prompts in [eval/intents.jsonl](eval/intents.jsonl). Run
-`npm run eval` for the rule-based baseline, or set a provider to compare it with the LLM. The
-results show on `/about`. The current baseline gets all fields right on 85% of prompts, misses
-0 emergencies and raises 0 false emergency alerts.
+**Live nearby places:** besides RioMed's partner labs, search shows real nearby hospitals,
+clinics and labs for the address you typed. These come live from Google Maps through Gemini's
+Maps grounding. Only the places Google Maps returns are shown, never the model's own text. They
+are labelled unverified, can't be booked, and carry Google Maps attribution. Live search works
+for areas RioMed doesn't cover yet, for example Ikorodu.
+
+**Evaluation:** 120 hand-labelled prompts in [backend/eval/intents.jsonl](backend/eval/intents.jsonl).
+Latest run with `gemini-3.5-flash-lite`, shown on `/about`:
+
+| | Rule-based fallback | Gemini |
+| --- | --- | --- |
+| All fields right | 85.0% | **89.2%** |
+| Test named | 90.8% | **97.5%** |
+| Area | 94.2% | **99.2%** |
+| Emergencies missed | 0 | 0 |
+| Latency p50 / p95 | < 10 ms | 0.94 s / 1.24 s |
+
+The rule layer runs first for emergencies and takes over whenever the AI is slow (over 2 s) or
+unavailable. Since that run, a guard also drops any test the user didn't name, so the model
+can't suggest tests from symptoms. It closes the 2 cases the evaluation caught.
 
 ## Run it
 

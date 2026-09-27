@@ -56,6 +56,26 @@ This is the boundary between the **frontend** (UI design, owned by the frontend 
   `RESULT_AVAILABLE`, `EXPIRED`, `CANCELLED_BY_PATIENT`, `CANCELLED_BY_FACILITY`, `NO_SHOW`,
   `REFUNDED`.
 
+## Live nearby places (FR-027, added 2026-09-27)
+
+- **Component:** `components/LiveNearby.tsx` (a client component) with the prop `address: string`.
+  - It calls `GET /api/live-places?address=…`, which returns
+    `{ status: "ok" | "disabled" | "unavailable", places[{ placeId, name, mapsUrl }], reason? }`.
+  - It renders nothing when the status is `disabled`.
+  - Restyle it freely, but keep these labels: "Live from Google Maps · not verified by RioMed ·
+    booking not available", "Sources: Google Maps" directly with the list, and one
+    "Open in Google Maps" link per place. Never add a booking button to live places.
+- **Wiring, on `/`:**
+  - Render `<LiveNearby address={view.intent.locationQuery ?? view.place?.name} />` **below**
+    the database results whenever that address is non-empty and there is no emergency.
+  - Also render it when `view.place` is null but `view.intent.locationQuery` is set. That means
+    the gazetteer didn't know the area, for example "Ikorodu", and live search is the only
+    source. In that case, replace the "Where are you?" message with a short note that there are
+    no RioMed partners in that area yet.
+  - Live search takes about 6–9 s, so its loading state must not block the rest of the page.
+- **Data addition:** `SearchView.results[].ownership` ("public" | "private") is now available,
+  as requested.
+
 ## Backend-owned files inside `frontend/` (do not change behaviour)
 
 These are glue code: server actions, route handlers and the session cookie. Restyling is not

@@ -24,6 +24,8 @@ The whole demo journey works locally: prompt → validated intent → ranked fac
 | Results vault (DB-stored, signed links) | FR-060 to FR-066 | 1 | done (demo variant) | – | e2e smoke | – | – |
 | Access control | SEC-007, 11.4 | 1 | done | – | tests/core/access | – | – |
 | Demo sign-in | FR-001 to FR-003 (stub) | 1 | done (stub) | – | – | – | – |
+| Live nearby places (Google Maps via Gemini) | FR-027 | 2 | done (backend, API and component); **home-page wiring is with the frontend agent** | – | tests/core/live-places (pending) | – | – |
+| No tests from symptoms guard | FR-017 | 2 | done | – | tests/core/support, ai (pending) | – | – |
 | Payouts | FR-059 to FR-059g | 3 | not started (out of scope today) | – | – | – | – |
 
 *Emergency detection is safety-relevant, so it is treated as tier 3 even in the demo. It has 42 independent tests and a fail-safe wrapper.
@@ -41,9 +43,10 @@ Tasks:
 
 ### TODO-002: Live LLM evaluation
 PRD: AI-010
-Status: blocked (needs a key)
+Status: done (2026-09-27 11:15). gemini-3.5-flash-lite: 89.2% all fields vs 85.0% baseline; p50 0.94 s, p95 1.24 s; 0 fallbacks; 0 emergencies missed
 Tasks:
-- [ ] Run `npm run eval` with Groq or Gemini, and commit `eval/report.json`
+- [x] Run `npm run eval` with Gemini, and commit `eval/report.json`
+- [ ] Re-run after the FR-017 guard (expected to fix e095 and e104)
 - [ ] Record the model ID and numbers in the submission disclosure
 
 ### TODO-003: Paystack test-mode end-to-end
@@ -77,8 +80,9 @@ Least confident about:
 
 ## What we have not proven
 
-- NFR-001 latency with a live LLM (only mock has been measured, at under 10 ms server time).
-- LLM accuracy on the eval set. Only the rule-based baseline has been measured (85% all-fields).
+- Live places: Google Maps free-tier quota for Maps grounding is unknown. Latency is 6–9 s per new address.
+
+- NFR-001: the LLM parse measured p95 1.24 s with sequential requests. It has not been measured under concurrent load. The timeout is 2 s (AI_TIMEOUT_MS).
 - Paystack checkout, webhook and refund against the real test API.
 - Behaviour on Postgres under concurrency (SQLite only so far).
 - The emergency red-flag list has not been clinically reviewed.
