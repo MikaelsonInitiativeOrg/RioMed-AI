@@ -1,0 +1,85 @@
+# RioMed AI
+
+Describe the medical test you need in plain language. RioMed finds registry-listed facilities
+near you in Lagos, books a slot at a partner lab, takes payment with Paystack, and delivers the
+result as a secure PDF instead of paper.
+
+> *"I need a malaria test around Ikeja tomorrow morning"* gives you **Malaria parasite · Ikeja ·
+> tomorrow 07:00–12:00**, with ranked facilities, prices and free times.
+
+This is the GoMyCode *Come Build with AI* hackathon build (27 September 2026). All facilities and
+patients are **synthetic**, and payments are **Paystack test mode**, or a clearly labelled
+simulation when no key is set.
+
+## What the AI does, and doesn't do
+
+| AI does | AI never does |
+| --- | --- |
+| Turns free text (English, Nigerian English, Pidgin, misspellings) into a schema-validated search: catalogue test codes, a place phrase and a time window | Invent facilities, prices or times. Every fact shown comes from the database |
+| Corrects misspelled places and tests toward known names | Choose coordinates. A gazetteer resolves place names, and unknown places are never guessed |
+| | Diagnose, recommend tests from symptoms, give doses or interpret results |
+| | Decide emergencies. Fixed rules catch red-flag phrases **before** the model runs and show **112** |
+
+If the model is slow (over 1.5 s), rate-limited or down, a deterministic parser answers and
+search keeps working. Mock mode, with no AI inference, is the default and is labelled in the UI.
+
+**Evaluation:** 120 hand-labelled prompts in [eval/intents.jsonl](eval/intents.jsonl). Run
+`npm run eval` for the rule-based baseline, or set a provider to compare it with the LLM. The
+results show on `/about`. The current baseline gets all fields right on 85% of prompts, misses
+0 emergencies and raises 0 false emergency alerts.
+
+## Run it
+
+```sh
+npm install
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local   # add AI / Paystack test keys here if you have them
+npm run db:push && npm run db:seed
+npm run dev                                    # http://localhost:3000
+```
+
+On the site, use **Demo sign-in** to act as a patient (Ada or Tunde) or as facility staff
+(Alausa or Yaba).
+
+**Demo journey:**
+1. Search.
+2. Tap **See times**, pick a slot, and pay.
+3. Sign in as *Staff, Alausa Diagnostics*. Check the patient in and upload a PDF.
+4. Sign back in as the patient and open the result.
+
+**Real AI** (explicit opt-in; keys stay server-side):
+
+```sh
+AI_PROVIDER=groq AI_MODEL=<model id> AI_API_KEY=<key>      # or gemini
+AI_PROVIDER=ollama AI_MODEL=<model> AI_BASE_URL=http://localhost:11434/v1
+```
+
+## Checks
+
+```sh
+npm test        # 648 contract tests for backend/src/core
+npm run smoke   # booking race, payment, access, upload, late-payment refund (local DB)
+npm run eval    # AI-010 evaluation
+npm run typecheck && npm run lint && npm run build
+```
+
+The tests in `backend/tests/core` were written by a separate test author, from
+[docs/contracts/core.md](docs/contracts/core.md) and the PRD, without reading the implementation.
+
+## Where things are
+
+- [docs/PRD.md](docs/PRD.md) is the full product requirements. Section 15.1 covers the hackathon scope.
+- [BUILD-DIRECTIVE.md](BUILD-DIRECTIVE.md) sets the engineering rules. [implementation.md](implementation.md) tracks status.
+
+This is an npm-workspaces monorepo:
+
+- **`backend/`** (`@riomed/backend`) holds everything except the UI.
+  - `src/core/` is the domain logic: intent parsing, emergency rules, ranking, booking state machine, money, Paystack checks, access control and the AI adapter. It is pure TypeScript and the single source of truth.
+  - `src/server/` holds the database, booking transactions, payments and the read models the UI uses.
+  - It also holds `prisma/`, `tests/`, `eval/` and `scripts/`.
+- **`frontend/`** (`@riomed/frontend`) is the Next.js app: pages, components and styles. It gets all data from `@riomed/backend` and never touches the database. The contract is [docs/contracts/ui.md](docs/contracts/ui.md).
+- [AGENTS.md](AGENTS.md) sets out who owns what when several AI agents work on the repo.
+- `reference/ai-starters/` holds the organisers' starter templates that the AI adapter is ported from.
+
+Stack: Next.js 16, TypeScript (strict), Tailwind, Zod, Prisma (SQLite locally, Postgres for
+hosting) and Paystack.

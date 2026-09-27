@@ -1,0 +1,32 @@
+{
+  "name": "@riomed/backend",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./core/intent": "./src/core/intent/index.ts",
+    "./core/*": "./src/core/*.ts",
+    "./server/*": "./src/server/*.ts",
+    "./eval/report.json": "./eval/report.json"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "eval": "tsx eval/run.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "smoke": "tsx --conditions=react-server scripts/e2e-smoke.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.2"
+  }
+}

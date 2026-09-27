@@ -1,0 +1,123 @@
+{
+  "generatedAt": "2026-09-27T09:13:44.806Z",
+  "cases": 120,
+  "baseline": {
+    "accuracy": {
+      "intent": 90,
+      "tests": 90.8,
+      "locationQuery": 94.2,
+      "day": 93.3,
+      "part": 95.8,
+      "all": 85
+    },
+    "byTag": {
+      "plain_english": {
+        "intent": 97.1,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 94.3,
+        "part": 97.1,
+        "all": 91.4
+      },
+      "date": {
+        "intent": 100,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 0,
+        "part": 66.7,
+        "all": 0
+      },
+      "unknown_place": {
+        "intent": 50,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 50
+      },
+      "nigerian_english": {
+        "intent": 95,
+        "tests": 95,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 95
+      },
+      "multi_test": {
+        "intent": 90.9,
+        "tests": 90.9,
+        "locationQuery": 100,
+        "day": 90.9,
+        "part": 100,
+        "all": 81.8
+      },
+      "pidgin": {
+        "intent": 94.1,
+        "tests": 94.1,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 94.1
+      },
+      "misspelling": {
+        "intent": 25,
+        "tests": 25,
+        "locationQuery": 41.7,
+        "day": 58.3,
+        "part": 66.7,
+        "all": 0
+      },
+      "emergency": {
+        "intent": 100,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 100
+      },
+      "symptom_only": {
+        "intent": 100,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 100
+      },
+      "adversarial": {
+        "intent": 100,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 100
+      },
+      "injection": {
+        "intent": 100,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 100
+      },
+      "diagnosis_seeking": {
+        "intent": 100,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 100
+      },
+      "off_topic": {
+        "intent": 100,
+        "tests": 100,
+        "locationQuery": 100,
+        "day": 100,
+        "part": 100,
+        "all": 100
+      }
+    },
+    "emergencyMissed": [],
+    "falseEmergency": []
+  },
+  "llm": null
+}

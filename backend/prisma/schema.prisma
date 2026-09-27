@@ -1,0 +1,132 @@
+// Hackathon build: SQLite locally. For the hosted demo, switch provider to "postgresql"
+// and point DATABASE_URL at Neon/Supabase (docs/PRD.md section 15.1).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id
+  name         String
+  role         String // patient | facility_staff | facility_admin | operator
+  facilityId   String?
+  facility     Facility?     @relation(fields: [facilityId], references: [id])
+  appointments Appointment[]
+}
+
+model Facility {
+  id                String         @id
+  nhfrId            String?
+  name              String
+  type              String // hospital | clinic | laboratory | diagnostic_centre | primary_health_centre
+  ownership         String // public | private
+  address           String
+  area              String
+  lat               Float
+  lng               Float
+  phone             String?
+  operational       Boolean        @default(true)
+  isPartner         Boolean        @default(false)
+  source            String // "demo" for synthetic records
+  sourceSyncedAt    DateTime
+  tests             FacilityTest[]
+  slots             Slot[]
+  staff             User[]
+  appointments      Appointment[]
+}
+
+model FacilityTest {
+  facilityId      String
+  testCode        String
+  priceKobo       Int
+  turnaroundHours Int
+  facility        Facility @relation(fields: [facilityId], references: [id])
+
+  @@id([facilityId, testCode])
+}
+
+/// Materialised slot. `used` counts capacity-holding appointments and is only changed
+/// by a conditional UPDATE ("used" < "capacity"), so the database enforces capacity (FR-043).
+model Slot {
+  id           String        @id
+  facilityId   String
+  start        DateTime
+  end          DateTime
+  capacity     Int
+  used         Int           @default(0)
+  facility     Facility      @relation(fields: [facilityId], references: [id])
+  appointments Appointment[]
+
+  @@index([facilityId, start])
+}
+
+model Appointment {
+  id            String       @id
+  reference     String       @unique
+  patientUserId String
+  patient       User         @relation(fields: [patientUserId], references: [id])
+  facilityId    String
+  facility      Facility     @relation(fields: [facilityId], references: [id])
+  slotId        String
+  slot          Slot         @relation(fields: [slotId], references: [id])
+  testCode      String
+  status        String
+  amountKobo    Int
+  holdExpiresAt DateTime
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  payments      Payment[]
+  results       TestResult[]
+
+  @@index([patientUserId])
+  @@index([facilityId, status])
+}
+
+model Payment {
+  id                String      @id
+  appointmentId     String
+  appointment       Appointment @relation(fields: [appointmentId], references: [id])
+  provider          String // paystack | simulated
+  providerReference String      @unique
+  amountKobo        Int
+  currency          String      @default("NGN")
+  status            String // initialized | success | failed
+  verifiedAt        DateTime?
+  createdAt         DateTime    @default(now())
+}
+
+model WebhookEvent {
+  id         String   @id // provider event key, unique -> idempotent processing (FR-054)
+  provider   String
+  receivedAt DateTime @default(now())
+  outcome    String
+}
+
+model TestResult {
+  id            String      @id
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  version       Int
+  fileName      String
+  sha256        String
+  sizeBytes     Int
+  content       Bytes
+  uploadedBy    String
+  uploadedAt    DateTime    @default(now())
+  supersededBy  String?
+
+  @@unique([appointmentId, version])
+}
+
+model AuditEvent {
+  id          String   @id
+  actorUserId String
+  action      String
+  subjectType String
+  subjectId   String
+  at          DateTime @default(now())
+}

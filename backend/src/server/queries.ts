@@ -1,0 +1,153 @@
+import "server-only";
+import { can, type Actor } from "../core/access";
+import { isSlotBookable, type AppointmentStatus } from "../core/booking";
+import { prisma } from "./db";
+import { expireStaleHolds, audit } from "./booking";
+
+/**
+ * Read models for the UI. The frontend calls these; it never imports the database.
+ * Every function that returns personal data takes the actor and checks access itself.
+ */
+
+export async function listDemoUsers() {
+  return prisma.user.findMany({ orderBy: { role: "asc" }, select: { id: true, name: true, role: true } });
+}
+
+export async function findUser(userId: string) {
+  return prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, role: true, facilityId: true } });
+}
+
+export async function getFacilityBooking(facilityId: string, now = new Date()) {
+  await expireStaleHolds(now);
+  const facility = await prisma.facility.findUnique({ where: { id: facilityId }, include: { tests: { orderBy: { priceKobo: "asc" } } } });
+  if (!facility) return null;
+  const slots = facility.isPartner
+    ? await prisma.slot.findMany({
+        where: { facilityId, start: { gte: new Date(now.getTime() + 60 * 60_000), lt: new Date(now.getTime() + 7 * 86400_000) } },
+        orderBy: { start: "asc" },
+      })
+    : [];
+  return {
+    facility: {
+      id: facility.id,
+      name: facility.name,
+      type: facility.type,
+      ownership: facility.ownership,
+      address: facility.address,
+      phone: facility.phone,
+      nhfrId: facility.nhfrId,
+      isPartner: facility.isPartner,
+      sourceSyncedAt: facility.sourceSyncedAt,
+    },
+    tests: facility.tests.map((t) => ({ testCode: t.testCode, priceKobo: t.priceKobo, turnaroundHours: t.turnaroundHours })),
+    slots: slots
+      .filter((s) => isSlotBookable(s.start, now))
+      .map((s) => ({ id: s.id, start: s.start, end: s.end, remaining: Math.max(0, s.capacity - s.used) })),
+  };
+}
+
+/** null = not found OR not allowed (don't reveal existence). */
+export async function getAppointmentForActor(actor: Actor | null, appointmentId: string) {
+  await expireStaleHolds();
+  const a = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    include: { facility: true, slot: true, results: { orderBy: { version: "desc" } }, payments: { orderBy: { createdAt: "desc" } } },
+  });
+  if (!a) return null;
+  const subject = { patientUserId: a.patientUserId, facilityId: a.facilityId, status: a.status as AppointmentStatus };
+  if (!can(actor, "appointment:view", subject)) return null;
+  const paid = a.payments.find((p) => p.status === "success");
+  return {
+    id: a.id,
+    reference: a.reference,
+    status: a.status as AppointmentStatus,
+    testCode: a.testCode,
+    amountKobo: a.amountKobo,
+    holdExpiresAt: a.holdExpiresAt,
+    facility: { id: a.facilityId, name: a.facility.name, address: a.facility.address },
+    slotStart: a.slot.start,
+    paidWith: paid ? (paid.provider as "paystack" | "simulated") : null,
+    isOwner: actor?.role === "patient" && actor.userId === a.patientUserId,
+    results: can(actor, "result:view", subject)
+      ? a.results.map((r) => ({ id: r.id, version: r.version, uploadedAt: r.uploadedAt, superseded: r.supersededBy != null }))
+      : [],
+  };
+}
+
+export async function listPatientAppointments(actor: Actor | null) {
+  if (!actor || actor.role !== "patient") return [];
+  await expireStaleHolds();
+  const rows = await prisma.appointment.findMany({
+    where: { patientUserId: actor.userId },
+    include: { facility: true, slot: true, _count: { select: { results: true } } },
+    orderBy: { slot: { start: "desc" } },
+  });
+  return rows.map((a) => ({
+    id: a.id,
+    reference: a.reference,
+    status: a.status as AppointmentStatus,
+    testCode: a.testCode,
+    amountKobo: a.amountKobo,
+    facilityName: a.facility.name,
+    slotStart: a.slot.start,
+    hasResult: a._count.results > 0,
+  }));
+}
+
+export async function listFacilityAppointments(actor: Actor | null, opts: { referenceQuery?: string } = {}) {
+  if (!actor || (actor.role !== "facility_staff" && actor.role !== "facility_admin") || !actor.facilityId) return null;
+  const facility = await prisma.facility.findUnique({ where: { id: actor.facilityId }, select: { id: true, name: true } });
+  const q = opts.referenceQuery?.trim().toUpperCase();
+  const rows = await prisma.appointment.findMany({
+    where: {
+      facilityId: actor.facilityId,
+      status: { in: ["CONFIRMED", "CHECKED_IN", "COMPLETED", "RESULT_AVAILABLE"] },
+      ...(q ? { reference: { contains: q } } : {}),
+    },
+    include: { slot: true, patient: true, _count: { select: { results: true } } },
+    orderBy: { slot: { start: "asc" } },
+    take: 50,
+  });
+  return {
+    facility,
+    appointments: rows.map((a) => ({
+      id: a.id,
+      reference: a.reference,
+      status: a.status as AppointmentStatus,
+      testCode: a.testCode,
+      slotStart: a.slot.start,
+      patientName: a.patient.name,
+      resultCount: a._count.results,
+    })),
+  };
+}
+
+export async function getSimulatedPayment(actor: Actor | null, reference: string) {
+  const p = await prisma.payment.findUnique({ where: { providerReference: reference }, include: { appointment: true } });
+  if (!p || p.provider !== "simulated" || !actor || p.appointment.patientUserId !== actor.userId) return null;
+  return { reference: p.providerReference, amountKobo: p.amountKobo, appointmentId: p.appointmentId };
+}
+
+/** Result file for download. Checks access and writes the audit event (FR-063, FR-064). */
+export async function getResultFileForActor(actor: Actor | null, resultId: string) {
+  const r = await prisma.testResult.findUnique({ where: { id: resultId }, include: { appointment: true } });
+  if (!r) return null;
+  const a = r.appointment;
+  if (!can(actor, "result:view", { patientUserId: a.patientUserId, facilityId: a.facilityId, status: a.status as AppointmentStatus })) return null;
+  await audit(actor!.userId, "result.view", "TestResult", r.id);
+  return { fileName: r.fileName, content: new Uint8Array(r.content) };
+}
+
+/** Idempotency record for webhooks (FR-054). Returns false if this event was already seen. */
+export async function recordWebhookEvent(id: string, provider: string): Promise<boolean> {
+  try {
+    await prisma.webhookEvent.create({ data: { id, provider, outcome: "received" } });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function setWebhookOutcome(id: string, outcome: string) {
+  await prisma.webhookEvent.update({ where: { id }, data: { outcome } });
+}
