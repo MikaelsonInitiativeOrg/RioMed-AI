@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTest } from "@riomed/backend/core/catalog";
 import { formatNaira } from "@riomed/backend/core/money";
-import { cancelAction, payAction } from "@/app/actions";
+import { cancelAction, transferSentAction } from "@/app/actions";
+import { getTransferDetails } from "@riomed/backend/server/booking";
+import { Building2, Copy, Landmark } from "lucide-react";
 import { lagosDateTime } from "@/lib/format";
 import { resultLink } from "@riomed/backend/server/auth";
 import { getAppointmentForActor } from "@riomed/backend/server/queries";
-import { paystackEnabled } from "@riomed/backend/server/paystack";
 import { getSessionUser } from "@/lib/session";
 import { StatusBadge } from "@/components/StatusBadge";
 import { HoldCountdown } from "@/components/HoldCountdown";
@@ -22,6 +23,7 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
   const a = await getAppointmentForActor(actor, id);
   if (!a) notFound(); // not found or not allowed: don't reveal which
   const unpaid = a.status === "HELD" || a.status === "PENDING_PAYMENT";
+  const transfer = unpaid && a.isOwner ? await getTransferDetails(actor, a.id) : null;
   const error = typeof sp.error === "string" ? sp.error : sp.payment === "failed" ? "Payment was not confirmed. You can try again while your hold lasts." : null;
 
   return (
@@ -83,13 +85,19 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
 
           {a.paidWith && (
             <p className="text-xs text-muted-foreground text-right">
-              Paid with {a.paidWith === "simulated" ? "simulated payment" : "Paystack test mode"}
+              Paid by bank transfer to the facility
             </p>
           )}
         </div>
       </section>
 
       {/* Error alert */}
+      {sp.sent === "1" && (
+        <div role="status" className="rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm font-bold text-accent">
+          Thanks. We&apos;ve told the facility; you&apos;ll get an email once they confirm the payment.
+        </div>
+      )}
+
       {error && (
         <div role="alert" className="rounded-2xl border border-danger-soft bg-danger-soft p-4 text-sm text-danger-foreground">
           <p className="font-semibold">{error}</p>
@@ -101,16 +109,39 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
         <section className="space-y-4">
           <HoldCountdown expiresAt={a.holdExpiresAt} />
 
-          <div className="space-y-2">
-            <form action={payAction}>
-              <input type="hidden" name="appointmentId" value={a.id} />
-              <button
-                type="submit"
-                className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-accent px-5 py-3 text-base font-heading font-bold text-white shadow-xs hover:bg-accent active:scale-[0.98] transition"
-              >
-                Pay {formatNaira(a.amountKobo)} {paystackEnabled() ? "with Paystack (test mode)" : "(simulated payment)"}
-              </button>
-            </form>
+          <div className="space-y-3">
+            {transfer && (
+              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
+                <p className="inline-flex items-center gap-2 text-base font-bold text-foreground">
+                  <Landmark className="h-5 w-5 text-primary" aria-hidden />
+                  {a.status === "PENDING_PAYMENT" ? "Transfer sent: waiting for the facility" : `Pay ${formatNaira(transfer.amountKobo)} by bank transfer`}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {a.status === "PENDING_PAYMENT"
+                    ? "The facility will confirm once the money arrives in its account. Your slot stays held meanwhile, and you'll get an email when it's confirmed."
+                    : "Pay the facility directly from your bank app. RioMed never holds your money."}
+                </p>
+                <dl className="mt-4 grid grid-cols-1 gap-3 rounded-lg bg-background p-4 text-sm sm:grid-cols-2">
+                  <div><dt className="text-subtle-foreground">Bank</dt><dd className="font-bold text-foreground">{transfer.bankName}</dd></div>
+                  <div><dt className="text-subtle-foreground">Account number</dt><dd className="font-mono text-lg font-bold tracking-wider text-foreground">{transfer.accountNumber}</dd></div>
+                  <div><dt className="text-subtle-foreground">Account name</dt><dd className="font-bold text-foreground">{transfer.accountName}</dd></div>
+                  <div><dt className="text-subtle-foreground">Amount</dt><dd className="font-bold text-foreground">{formatNaira(transfer.amountKobo)}</dd></div>
+                  <div className="sm:col-span-2"><dt className="text-subtle-foreground">Narration / reference (type this exactly)</dt><dd className="inline-flex items-center gap-2 font-mono text-lg font-bold text-primary"><Copy className="h-4 w-4" aria-hidden />{transfer.narration}</dd></div>
+                </dl>
+                {a.status === "HELD" && (
+                  <form action={transferSentAction} className="mt-4">
+                    <input type="hidden" name="appointmentId" value={a.id} />
+                    <button type="submit" className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-accent px-5 text-base font-bold text-white shadow-sm transition-colors hover:bg-accent/90">
+                      <Building2 className="h-5 w-5" aria-hidden />
+                      I&apos;ve sent the transfer
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
+            {!transfer && (
+              <p className="rounded-xl border border-warning/30 bg-warning-soft p-4 text-sm text-warning-foreground">This facility has no account for transfers yet. Please call it to arrange payment.</p>
+            )}
 
             <form action={cancelAction}>
               <input type="hidden" name="appointmentId" value={a.id} />

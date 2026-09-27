@@ -25,6 +25,9 @@ model User {
   failedLogins      Int           @default(0)
   failedPins        Int           @default(0)
   lockedUntil       DateTime?
+  email             String?
+  resetTokenHash    String?
+  resetTokenExpires DateTime?
   createdAt         DateTime      @default(now())
   facility     Facility?     @relation(fields: [facilityId], references: [id])
   appointments Appointment[]
@@ -41,6 +44,11 @@ model Facility {
   lat               Float
   lng               Float
   phone             String?
+  /// Direct bank transfer (2026-09-27): patients pay the facility's own account. No account = not bookable online.
+  bankName          String?
+  accountNumber     String?
+  accountName       String?
+  email             String?
   operational       Boolean        @default(true)
   isPartner         Boolean        @default(false)
   source            String // "demo" for synthetic records
@@ -89,6 +97,8 @@ model Appointment {
   status        String
   amountKobo    Int
   holdExpiresAt DateTime
+  /// Patient said "I've sent the transfer"; the facility confirms receipt.
+  transferSentAt DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   payments      Payment[]
@@ -141,4 +151,19 @@ model AuditEvent {
   subjectType String
   subjectId   String
   at          DateTime @default(now())
+}
+
+/// Demo email outbox (2026-09-27): notifications are recorded and shown in-app, not sent.
+model EmailMessage {
+  id         String   @id
+  toAddress  String
+  toUserId   String?
+  facilityId String?
+  kind       String // signin | password_reset | booking_held | transfer_sent | booking_confirmed | booking_new | account_created
+  subject    String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([toUserId, createdAt])
+  @@index([facilityId, createdAt])
 }

@@ -11,6 +11,7 @@ import {
   type AppointmentStatus,
 } from "../core/booking";
 import { computeCharge } from "../core/money";
+import { hasBankDetails, transferNarration, TRANSFER_CONFIRM_HOURS } from "../core/bankDetails";
 import { prisma } from "./db";
 
 type Tx = Prisma.TransactionClient;
@@ -60,6 +61,8 @@ export async function holdSlot(actor: Actor | null, input: { slotId: string; tes
   return prisma.$transaction(async (tx) => {
     const slot = await tx.slot.findUnique({ where: { id: input.slotId }, include: { facility: true } });
     if (!slot || !slot.facility.isPartner || !slot.facility.operational) throw new BookingError("NOT_FOUND");
+    // Direct transfer: no business account on file means no online booking (patients call instead).
+    if (!hasBankDetails(slot.facility)) throw new BookingError("NOT_ALLOWED", "This facility isn't taking online bookings yet. Please call it to book.");
     if (!isSlotBookable(slot.start, now)) throw new BookingError("SLOT_UNAVAILABLE", "This time is too soon to book.");
     const offer = await tx.facilityTest.findUnique({ where: { facilityId_testCode: { facilityId: slot.facilityId, testCode: input.testCode } } });
     if (!offer) throw new BookingError("INVALID", "This facility does not offer that test.");
@@ -173,3 +176,38 @@ export async function uploadResult(actor: Actor | null, appointmentId: string, f
 export async function audit(actorUserId: string, action: string, subjectType: string, subjectId: string) {
   await prisma.auditEvent.create({ data: { id: randomUUID(), actorUserId, action, subjectType, subjectId } });
 }
+
+// ---- Direct bank transfer (2026-09-27; replaces Paystack for now) ----
+
+/** What the patient needs to pay: the facility's account, the amount and the reference to quote. */
+export async function getTransferDetails(actor: Actor | null, appointmentId: string) {
+  const a = await prisma.appointment.findUnique({ where: { id: appointmentId }, include: { facility: true } });
+  if (!a || !actor || actor.role !== "patient" || a.patientUserId !== actor.userId) return null;
+  const f = a.facility;
+  if (!hasBankDetails(f)) return null;
+  return { bankName: f.bankName!, accountNumber: f.accountNumber!, accountName: f.accountName!, amountKobo: a.amountKobo, narration: transferNarration(a.reference), transferSentAt: a.transferSentAt };
+}
+
+/** Patient: "I've sent the transfer". Keeps the slot held while the facility checks its account. */
+export async function markTransferSent(actor: Actor | null, appointmentId: string, now = new Date()) {
+  const a = await prisma.appointment.findUnique({ where: { id: appointmentId } });
+  if (!a || !actor || actor.role !== "patient" || a.patientUserId !== actor.userId) throw new BookingError("NOT_ALLOWED");
+  if (a.status !== "HELD") throw new BookingError("INVALID", "This booking isn't waiting for a transfer.");
+  if (a.holdExpiresAt.getTime() < now.getTime()) throw new BookingError("SLOT_UNAVAILABLE", "The hold expired. Please book again.");
+  await prisma.$transaction(async (tx) => {
+    if (!(await moveStatus(tx, a.id, "HELD", "PENDING_PAYMENT"))) throw new BookingError("INVALID", "This booking changed. Please refresh.");
+    await tx.appointment.update({ where: { id: a.id }, data: { transferSentAt: now, holdExpiresAt: new Date(now.getTime() + TRANSFER_CONFIRM_HOURS * 3_600_000) } });
+  });
+  await audit(actor.userId, "payment.transfer_sent", "Appointment", a.id);
+}
+
+/** Facility: the transfer arrived in its account. Only staff of that facility can confirm. */
+export async function confirmTransferReceived(actor: Actor | null, appointmentId: string) {
+  const a = await prisma.appointment.findUnique({ where: { id: appointmentId } });
+  if (!a || !actor || (actor.role !== "facility_staff" && actor.role !== "facility_admin") || actor.facilityId !== a.facilityId) throw new BookingError("NOT_ALLOWED");
+  if (a.status !== "PENDING_PAYMENT" && a.status !== "HELD") throw new BookingError("INVALID", "This booking isn't waiting for payment.");
+  const outcome = await confirmPaid(a.id);
+  if (outcome !== "CONFIRMED" && outcome !== "ALREADY_CONFIRMED") throw new BookingError("SLOT_UNAVAILABLE", "The slot was released. Ask the patient to rebook, and refund the transfer.");
+  await audit(actor.userId, "payment.transfer_confirmed", "Appointment", a.id);
+}
+

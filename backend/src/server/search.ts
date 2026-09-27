@@ -6,6 +6,7 @@ import { searchFacilities, type RankedFacility } from "../core/search";
 import { isSlotBookable } from "../core/booking";
 import { prisma } from "./db";
 import { geocodePlace } from "./geocode";
+import { hasBankDetails } from "../core/bankDetails";
 
 export interface SearchView {
   query: string;
@@ -56,6 +57,8 @@ export async function searchWithIntent(intent: SearchIntent, now = new Date(), d
 
   const byId = new Map(facilities.map((f) => [f.id, f]));
   const candidates = facilities.map((f) => {
+    // Bookable online only with a business account to pay into; others are "call to book".
+    const bookable = f.isPartner && hasBankDetails(f);
     const free = f.slots.filter((s) => s.used < s.capacity && isSlotBookable(s.start, now));
     return {
       id: f.id,
@@ -63,9 +66,9 @@ export async function searchWithIntent(intent: SearchIntent, now = new Date(), d
       lat: f.lat,
       lng: f.lng,
       operational: f.operational,
-      isPartner: f.isPartner,
+      isPartner: bookable,
       offeredTests: f.tests.map((t) => t.testCode),
-      hasSlotInWindow: f.isPartner && free.length > 0,
+      hasSlotInWindow: bookable && free.length > 0,
     };
   });
 
@@ -73,7 +76,7 @@ export async function searchWithIntent(intent: SearchIntent, now = new Date(), d
   const results = res.results.map((r) => {
     const f = byId.get(r.id)!;
     const prices = f.tests.filter((t) => intent.tests.includes(t.testCode)).map((t) => t.priceKobo);
-    const nextSlot = f.isPartner ? (f.slots.find((s) => s.used < s.capacity && isSlotBookable(s.start, now))?.start ?? null) : null;
+    const nextSlot = r.isPartner ? (f.slots.find((s) => s.used < s.capacity && isSlotBookable(s.start, now))?.start ?? null) : null;
     return {
       ...r,
       type: f.type,

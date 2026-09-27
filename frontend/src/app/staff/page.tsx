@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FacilityShell } from "@/components/FacilityShell";
 import { redirect } from "next/navigation";
 import { getTest } from "@riomed/backend/core/catalog";
-import { checkInAction } from "@/app/actions";
+import { checkInAction, confirmTransferAction } from "@/app/actions";
 import { lagosDayMonth, lagosTimeOnly } from "@/lib/format";
 import { listFacilityAppointments } from "@riomed/backend/server/queries";
 import { getSessionUser } from "@/lib/session";
@@ -35,6 +35,12 @@ export default async function StaffPage(props: PageProps<"/staff">) {
           <Link href="/staff" className="text-xs underline hover:text-primary-strong">
             Dismiss
           </Link>
+        </div>
+      )}
+
+      {sp.confirmed && (
+        <div role="status" className="rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm font-bold text-accent">
+          Payment confirmed. The patient has been emailed their confirmed booking.
         </div>
       )}
 
@@ -115,6 +121,14 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                           <p className="text-sm text-muted-foreground">{a.patientName}</p>
                         </div>
                         <div className="flex flex-col gap-2">
+                          {(a.status === "PENDING_PAYMENT" || a.status === "HELD") && (
+                            <form action={confirmTransferAction}>
+                              <input type="hidden" name="appointmentId" value={a.id} />
+                              <button type="submit" className="w-full min-h-[44px] rounded-lg bg-accent px-4 text-sm font-bold text-white hover:bg-accent/90">
+                                {a.status === "PENDING_PAYMENT" ? "Payment received: confirm" : "Transfer received early: confirm"}
+                              </button>
+                            </form>
+                          )}
                           {a.status === "CONFIRMED" && (
                             <form action={checkInAction}>
                               <input type="hidden" name="appointmentId" value={a.id} />
@@ -210,11 +224,14 @@ export default async function StaffPage(props: PageProps<"/staff">) {
                               />
                             )}
 
-                            {/* HELD -> Awaiting payment */}
+                            {/* Awaiting a direct transfer: confirm once it's in the account */}
                             {["HELD", "PENDING_PAYMENT"].includes(a.status) && (
-                              <span className="text-xs text-subtle-foreground">
-                                Awaiting payment
-                              </span>
+                              <form action={confirmTransferAction}>
+                                <input type="hidden" name="appointmentId" value={a.id} />
+                                <button type="submit" className="inline-flex min-h-[44px] items-center rounded-md bg-accent px-3 text-xs font-bold text-white hover:bg-accent/90" title={a.status === "PENDING_PAYMENT" ? "The patient says the transfer was sent" : "Not marked as sent yet"}>
+                                  {a.status === "PENDING_PAYMENT" ? "Payment received" : "Confirm transfer"}
+                                </button>
+                              </form>
                             )}
 
                             {/* View details link */}

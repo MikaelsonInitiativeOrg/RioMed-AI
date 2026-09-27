@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getDeviceUserSummary, listSignupFacilities } from "@riomed/backend/server/accounts";
-import { CredentialWarningDialog, PasswordDialog, PendingDialog, PinDialog, SignUpDialog } from "@/components/AccountDialog";
+import { CredentialWarningDialog, ForgotDialog, PasswordDialog, PendingDialog, PinDialog, ResetDialog, SignUpDialog } from "@/components/AccountDialog";
 import { getDeviceUserId, getSessionUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,8 @@ export default async function AccountPage(props: PageProps<"/account">) {
   const next = nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/";
 
   if (mode === "warning") return <CredentialWarningDialog />;
+  if (mode === "forgot") return <ForgotDialog />;
+  if (mode === "reset") return <ResetDialog token={one(sp.token) ?? ""} />;
   if (mode === "signup") return <SignUpDialog type={type} facilities={type === "facility" ? await listSignupFacilities() : []} />;
 
   // "access dashboard": already unlocked -> straight in; remembered device -> PIN; else password.

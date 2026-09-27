@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { TEST_CATALOG } from "@riomed/backend/core/catalog";
 import { FACILITY_TYPES, FACILITY_TYPE_LABELS, SUGGESTED_PRICES_NAIRA } from "@riomed/backend/core/facilityRegistration";
-import { passwordLoginAction, pinUnlockAction, signUpAction, forgetDeviceAction, type AccountFormState } from "@/app/actions";
+import { passwordLoginAction, pinUnlockAction, signUpAction, forgetDeviceAction, requestResetAction, resetPasswordAction, type AccountFormState } from "@/app/actions";
 
 /**
  * Account popup opened from the search box ("create an account", "access dashboard").
@@ -73,6 +73,9 @@ export function SignUpDialog({ type, facilities }: { type: "patient" | "facility
             </select>
           </label>
         )}
+        <label className="block text-sm">Email <span className="text-subtle-foreground">(for booking updates and password reset)</span>
+          <input name="email" type="email" required maxLength={120} autoComplete="email" autoCapitalize="none" className={input} />
+        </label>
         <label className="block text-sm">Username
           <input name="username" required pattern="[A-Za-z0-9_.]{3,30}" autoComplete="username" autoCapitalize="none" className={input} />
         </label>
@@ -129,9 +132,22 @@ function NewFacilityFields() {
         {locating === "error" && <p role="alert" className="mt-1 text-xs text-danger-foreground">Couldn&apos;t get your location. We&apos;ll place the pin from the address.</p>}
         {coords && <><input type="hidden" name="lat" value={coords.lat} /><input type="hidden" name="lng" value={coords.lng} /></>}
       </div>
-      <label className="block text-sm">Phone <span className="text-subtle-foreground">(optional)</span>
+      <label className="block text-sm">Phone <span className="text-subtle-foreground">(patients can call to book)</span>
         <input name="phone" type="tel" maxLength={20} autoComplete="tel" className={input} />
       </label>
+      <div className="space-y-3 rounded-lg border border-border bg-background p-3">
+        <p className="text-sm font-bold text-foreground">Business bank account <span className="font-normal text-subtle-foreground">(required: patients pay you directly by transfer)</span></p>
+        <label className="block text-sm">Bank name
+          <input name="bankName" required minLength={2} maxLength={60} placeholder="e.g. GTBank" className={input} />
+        </label>
+        <label className="block text-sm">Account number <span className="text-subtle-foreground">(10 digits)</span>
+          <input name="accountNumber" required inputMode="numeric" pattern="[0-9 -]{10,13}" maxLength={13} autoComplete="off" className={input} />
+        </label>
+        <label className="block text-sm">Account name <span className="text-subtle-foreground">(as the bank shows it)</span>
+          <input name="accountName" required minLength={3} maxLength={80} className={input} />
+        </label>
+        <p className="text-xs text-subtle-foreground">RioMed never holds patients&apos; money. You confirm each transfer on your desk when it arrives.</p>
+      </div>
       <div className="text-sm">
         <p className="font-medium">Tests you offer, with your price in naira</p>
         <ul className="mt-2 max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-border-strong p-2">
@@ -167,6 +183,7 @@ export function PasswordDialog({ next }: { next: string }) {
           <input name="password" type="password" required autoComplete="current-password" className={input} />
         </label>
         <button disabled={busy} className={button}>{busy ? "Signing in…" : "Sign in"}</button>
+        <p className="text-center text-sm"><Link className="underline" href="/account?mode=forgot">Forgot password?</Link></p>
         <p className="text-center text-sm">New here? <Link className="underline" href="/account?mode=signup">Create an account</Link> · <Link className="underline" href="/account?mode=signup&type=facility">Register a facility</Link></p>
       </form>
     </Shell>
@@ -204,6 +221,45 @@ export function CredentialWarningDialog() {
         It looked like your message contained a password or PIN, so we didn&apos;t search it or send it anywhere. Enter your details only in the sign-in box.
       </p>
       <Link href="/account?mode=access" className={`${button} mt-4 block text-center`}>Sign in securely</Link>
+    </Shell>
+  );
+}
+
+export function ForgotDialog() {
+  const [state, action, busy] = useActionState(requestResetAction, {});
+  return (
+    <Shell title="Reset your password">
+      {state.sent ? (
+        <div className="space-y-3">
+          <p className="rounded-lg bg-accent-soft p-3 text-sm text-accent">{state.sent}</p>
+          <p className="text-sm text-muted-foreground">Demo: the email appears in the Inbox of that account. Sign in on another device, or ask a teammate, to open it; in production it goes to the real address.</p>
+          <p className="text-center text-sm"><Link className="underline" href="/account?mode=access">Back to sign in</Link></p>
+        </div>
+      ) : (
+        <form action={action} className="space-y-3">
+          <p className="text-sm text-muted-foreground">Enter your username or email. We&apos;ll email a link that works for 30 minutes.</p>
+          <label className="block text-sm">Username or email
+            <input name="identifier" required maxLength={120} autoComplete="username" autoCapitalize="none" className={input} />
+          </label>
+          <button disabled={busy} className={button}>{busy ? "Sending…" : "Email me a reset link"}</button>
+        </form>
+      )}
+    </Shell>
+  );
+}
+
+export function ResetDialog({ token }: { token: string }) {
+  const [state, action, busy] = useActionState(resetPasswordAction, {});
+  return (
+    <Shell title="Choose a new password">
+      <form action={action} className="space-y-3">
+        <input type="hidden" name="token" value={token} />
+        <ErrorLine state={state} />
+        <label className="block text-sm">New password <span className="text-subtle-foreground">(8+ characters)</span>
+          <input name="password" type="password" required minLength={8} maxLength={128} autoComplete="new-password" className={input} />
+        </label>
+        <button disabled={busy} className={button}>{busy ? "Saving…" : "Save and sign in"}</button>
+      </form>
     </Shell>
   );
 }

@@ -2,12 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { BookingError, cancelByPatient, checkIn, holdSlot, uploadResult } from "@riomed/backend/server/booking";
+import { BookingError, cancelByPatient, checkIn, confirmTransferReceived, holdSlot, markTransferSent, uploadResult } from "@riomed/backend/server/booking";
 import { promptBook } from "@riomed/backend/server/promptBook";
 import { parseDeviceOrigin } from "@riomed/backend/server/search";
-import { completePayment, startPayment } from "@riomed/backend/server/payments";
+import { notifyBookingConfirmed, notifyBookingHeld, notifyTransferSent } from "@riomed/backend/server/notify";
 import { clearSession, forgetDevice, getDeviceUserId, getSessionUser, rememberDevice, setSessionUser } from "@/lib/session";
-import { decideFacilityAccount, loginWithPassword, signUp, unlockWithPin, type AccountResult } from "@riomed/backend/server/accounts";
+import { decideFacilityAccount, loginWithPassword, requestPasswordReset, resetPassword, signUp, unlockWithPin, type AccountResult } from "@riomed/backend/server/accounts";
 
 function safeNext(next: FormDataEntryValue | null): string {
   const n = typeof next === "string" ? next : "/";
@@ -32,6 +32,7 @@ export async function holdAction(formData: FormData) {
     const msg = e instanceof BookingError ? e.message : "Something went wrong. Please try again.";
     redirect(`${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}`);
   }
+  await notifyBookingHeld(id);
   redirect(`/appointments/${id}`);
 }
 
@@ -49,27 +50,37 @@ export async function promptBookAction(formData: FormData) {
     const msg = e instanceof BookingError ? e.message : "Something went wrong. Please try again.";
     redirect(`${back}&error=${encodeURIComponent(msg)}`);
   }
+  await notifyBookingHeld(id);
   redirect(`/appointments/${id}`);
 }
 
-export async function payAction(formData: FormData) {
+/** Patient: "I've sent the transfer" to the facility's account. The facility then confirms receipt. */
+export async function transferSentAction(formData: FormData) {
   const actor = await getSessionUser();
   const id = String(formData.get("appointmentId") ?? "");
-  let url: string;
   try {
-    url = await startPayment(actor, id);
+    await markTransferSent(actor, id);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Payment could not start.";
+    const msg = e instanceof BookingError ? e.message : "Something went wrong. Please try again.";
     redirect(`/appointments/${id}?error=${encodeURIComponent(msg)}`);
   }
-  redirect(url);
+  await notifyTransferSent(id);
+  redirect(`/appointments/${id}?sent=1`);
 }
 
-export async function simulatedPayAction(formData: FormData) {
-  const reference = String(formData.get("reference") ?? "");
-  const r = await completePayment(reference, { simulated: true });
-  if (!r.ok || !("appointmentId" in r)) redirect("/dashboard?payment=failed");
-  redirect(`/appointments/${r.appointmentId}`);
+/** Facility desk: the transfer arrived, confirm the booking. */
+export async function confirmTransferAction(formData: FormData) {
+  const actor = await getSessionUser();
+  const id = String(formData.get("appointmentId") ?? "");
+  try {
+    await confirmTransferReceived(actor, id);
+  } catch (e) {
+    const msg = e instanceof BookingError ? e.message : "Something went wrong. Please try again.";
+    redirect(`/staff?error=${encodeURIComponent(msg)}`);
+  }
+  await notifyBookingConfirmed(id);
+  revalidatePath("/staff");
+  redirect("/staff?confirmed=1");
 }
 
 export async function cancelAction(formData: FormData) {
@@ -136,6 +147,7 @@ export async function signUpAction(_prev: AccountFormState, formData: FormData):
     displayName: formData.get("displayName"),
     type,
     facilityId: formData.get("facilityId"),
+    email: formData.get("email"),
     registration: type === "facility" && formData.get("register") === "new" ? readRegistration(formData) : undefined,
     origin: parseDeviceOrigin(formData.get("lat"), formData.get("lng")),
   });
@@ -153,6 +165,9 @@ function readRegistration(formData: FormData) {
     address: formData.get("address"),
     phone: formData.get("phone"),
     prices,
+    bankName: formData.get("bankName"),
+    accountNumber: formData.get("accountNumber"),
+    accountName: formData.get("accountName"),
   };
 }
 
@@ -180,4 +195,13 @@ export async function decideAccountAction(formData: FormData) {
   await decideFacilityAccount(actor, String(formData.get("userId") ?? ""), formData.get("decision") === "approve");
   revalidatePath("/operator");
   redirect("/operator");
+}
+
+export async function requestResetAction(_prev: AccountFormState & { sent?: string }, formData: FormData): Promise<AccountFormState & { sent?: string }> {
+  return { sent: await requestPasswordReset(formData.get("identifier")) };
+}
+
+export async function resetPasswordAction(_prev: AccountFormState, formData: FormData): Promise<AccountFormState> {
+  const r = await resetPassword(formData.get("token"), formData.get("password"));
+  return finishSignIn(r, "/");
 }

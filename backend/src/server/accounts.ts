@@ -1,11 +1,14 @@
 import "server-only";
-import { randomBytes, randomUUID, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
+import { createHash, randomBytes, randomUUID, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
 import { checkPassword, checkPin, checkUsername, LOCK_MINUTES, MAX_FAILED_ATTEMPTS } from "../core/credentials";
 import { prisma } from "./db";
 import { audit } from "./booking";
 import { buildOpeningSlots, checkFacilityRegistration } from "../core/facilityRegistration";
 import { nearestPlace, type LatLng } from "../core/geo";
 import { geocodeAddress } from "./geocode";
+import { checkBankDetails, checkEmail } from "../core/bankDetails";
+import { appUrl, sendEmail } from "./email";
+import { notifyAccountCreated, notifySignIn } from "./notify";
 
 /**
  * Real accounts (added 2026-09-27, product owner request; replaces FR-002 phone OTP for the demo).
@@ -57,8 +60,10 @@ export async function signUp(input: {
   displayName: unknown;
   type: "patient" | "facility";
   facilityId?: unknown;
+  /** For sign-in alerts, booking notifications and password reset (demo outbox). */
+  email?: unknown;
   /** New facility details (type "facility" without facilityId). prices: ticked testCode -> naira. */
-  registration?: { name: unknown; type: unknown; address: unknown; phone: unknown; prices: Record<string, unknown> };
+  registration?: { name: unknown; type: unknown; address: unknown; phone: unknown; prices: Record<string, unknown>; bankName?: unknown; accountNumber?: unknown; accountName?: unknown };
   /** Where the facility is, when the person registering shared their location; else the address is geocoded. */
   origin?: LatLng | null;
 }): Promise<AccountResult> {
@@ -70,8 +75,10 @@ export async function signUp(input: {
   if (!pin.ok) return pin;
   const name = typeof input.displayName === "string" ? input.displayName.trim().replace(/\s+/g, " ").slice(0, 60) : "";
   if (name.length < 2) return { ok: false, error: "Enter your name (at least 2 characters)." };
+  const email = checkEmail(input.email);
+  if (!email.ok) return email;
 
-  if (input.type === "facility" && input.registration) return registerFacility(u.value, pw.value, pin.value, name, input.registration, input.origin ?? null);
+  if (input.type === "facility" && input.registration) return registerFacility(u.value, pw.value, pin.value, name, email.value, input.registration, input.origin ?? null);
 
   let facilityId: string | null = null;
   if (input.type === "facility") {
@@ -92,10 +99,12 @@ export async function signUp(input: {
         pinHash,
         role: input.type === "facility" ? "facility_staff" : "patient",
         facilityId,
+        email: email.value,
         status: input.type === "facility" ? "pending" : "active",
       },
     });
     await audit(user.id, "account.signup", "User", user.id);
+    await notifyAccountCreated(user.id);
     return { ok: true, userId: user.id, role: user.role, status: user.status as "active" | "pending" };
   } catch {
     return { ok: false, error: "That username is taken. Try another." };
@@ -107,12 +116,16 @@ async function registerFacility(
   password: string,
   pin: string,
   name: string,
+  email: string,
   raw: NonNullable<Parameters<typeof signUp>[0]["registration"]>,
   origin: LatLng | null,
 ): Promise<AccountResult> {
   const reg = checkFacilityRegistration(raw);
   if (!reg.ok) return reg;
   const f = reg.value;
+  // Patients pay the facility directly, so a business account is required to be listed as bookable.
+  const bank = checkBankDetails({ bankName: raw.bankName, accountNumber: raw.accountNumber, accountName: raw.accountName });
+  if (!bank.ok) return bank;
   const located = origin ?? (await geocodeAddress(f.address));
   if (!located) return { ok: false, error: "We couldn't find that address on the map. Add the area, city and country, or use your current location." };
   const where = { lat: located.lat, lng: located.lng };
@@ -136,6 +149,10 @@ async function registerFacility(
           lat: where.lat,
           lng: where.lng,
           phone: f.phone,
+          email,
+          bankName: bank.value.bankName,
+          accountNumber: bank.value.accountNumber,
+          accountName: bank.value.accountName,
           operational: true,
           isPartner: true,
           source: "self_registered",
@@ -145,7 +162,7 @@ async function registerFacility(
       prisma.facilityTest.createMany({ data: f.tests.map((t) => ({ facilityId, testCode: t.testCode, priceKobo: t.priceKobo, turnaroundHours: 24 })) }),
       prisma.slot.createMany({ data: buildOpeningSlots(facilityId, f.type, now) }),
       prisma.user.create({
-        data: { id: userId, username, name, passwordHash, pinHash, role: "facility_admin", facilityId, status: "active" },
+        data: { id: userId, username, name, passwordHash, pinHash, email, role: "facility_admin", facilityId, status: "active" },
       }),
     ]);
   } catch (e) {
@@ -155,6 +172,7 @@ async function registerFacility(
   }
   await audit(userId, "account.signup", "User", userId);
   await audit(userId, "facility.register", "Facility", facilityId);
+  await notifyAccountCreated(userId);
   return { ok: true, userId, role: "facility_admin", status: "active" };
 }
 
@@ -194,6 +212,7 @@ export async function loginWithPassword(usernameRaw: unknown, password: unknown)
   }
   await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, failedPins: 0, lockedUntil: null } });
   await audit(user.id, "account.login.password", "User", user.id);
+  await notifySignIn(user.id, "password");
   return outcome(user);
 }
 
@@ -211,6 +230,7 @@ export async function unlockWithPin(userId: string, pin: unknown): Promise<Accou
   }
   await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, failedPins: 0, lockedUntil: null } });
   await audit(user.id, "account.login.pin", "User", user.id);
+  await notifySignIn(user.id, "pin");
   return outcome(user);
 }
 
@@ -231,4 +251,42 @@ export async function decideFacilityAccount(actor: { userId: string; role: strin
   const r = await prisma.user.updateMany({ where: { id: userId, status: "pending" }, data: { status: approve ? "active" : "rejected" } });
   if (r.count === 1) await audit(actor.userId, approve ? "account.approve" : "account.reject", "User", userId);
   return r.count === 1;
+}
+
+// ---- Password reset by email (demo outbox) ----
+
+const RESET_MINUTES = 30;
+const sha256 = (t: string) => createHash("sha256").update(t).digest("hex");
+export const RESET_SENT_MSG = "If that account has an email address, we've sent it a reset link. It works for 30 minutes.";
+
+/** Always returns the same message, so it never reveals which accounts exist. */
+export async function requestPasswordReset(identifier: unknown): Promise<string> {
+  const raw = typeof identifier === "string" ? identifier.trim().toLowerCase() : "";
+  if (!raw) return RESET_SENT_MSG;
+  const user = await prisma.user.findFirst({ where: raw.includes("@") ? { email: raw } : { username: raw } });
+  if (!user?.email || !user.passwordHash) return RESET_SENT_MSG;
+  const token = randomBytes(24).toString("base64url");
+  await prisma.user.update({ where: { id: user.id }, data: { resetTokenHash: sha256(token), resetTokenExpires: new Date(Date.now() + RESET_MINUTES * 60_000) } });
+  await sendEmail({
+    to: user.email, toUserId: user.id, kind: "password_reset",
+    subject: "Reset your RioMed password",
+    body: `Hi ${user.name},\n\nSomeone asked to reset the password for @${user.username}. If it was you, open this link within ${RESET_MINUTES} minutes:\n\n${appUrl(`/account?mode=reset&token=${token}`)}\n\nIf it wasn't you, ignore this email; your password stays the same.`,
+  });
+  await audit(user.id, "account.reset.requested", "User", user.id);
+  return RESET_SENT_MSG;
+}
+
+export async function resetPassword(token: unknown, newPassword: unknown): Promise<AccountResult> {
+  const bad: AccountResult = { ok: false, error: "This reset link is invalid or has expired. Ask for a new one." };
+  if (typeof token !== "string" || token.length < 20) return bad;
+  const user = await prisma.user.findFirst({ where: { resetTokenHash: sha256(token), resetTokenExpires: { gt: new Date() } } });
+  if (!user?.username) return bad;
+  const pw = checkPassword(newPassword, user.username);
+  if (!pw.ok) return pw;
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash: await hashSecret(pw.value), resetTokenHash: null, resetTokenExpires: null, failedLogins: 0, failedPins: 0, lockedUntil: null },
+  });
+  await audit(user.id, "account.reset.done", "User", user.id);
+  return outcome(user);
 }

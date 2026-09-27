@@ -1,4 +1,5 @@
 import "server-only";
+import { hasBankDetails } from "../core/bankDetails";
 import { can, type Actor } from "../core/access";
 import { isSlotBookable, type AppointmentStatus } from "../core/booking";
 import { prisma } from "./db";
@@ -25,7 +26,8 @@ export async function getFacilityBooking(facilityId: string, now = new Date()) {
   await expireStaleHolds(now);
   const facility = await prisma.facility.findUnique({ where: { id: facilityId }, include: { tests: { orderBy: { priceKobo: "asc" } } } });
   if (!facility) return null;
-  const slots = facility.isPartner
+  const bookable = facility.isPartner && hasBankDetails(facility); // no business account: call to book
+  const slots = bookable
     ? await prisma.slot.findMany({
         where: { facilityId, start: { gte: new Date(now.getTime() + 60 * 60_000), lt: new Date(now.getTime() + 7 * 86400_000) } },
         orderBy: { start: "asc" },
@@ -40,7 +42,7 @@ export async function getFacilityBooking(facilityId: string, now = new Date()) {
       address: facility.address,
       phone: facility.phone,
       nhfrId: facility.nhfrId,
-      isPartner: facility.isPartner,
+      isPartner: bookable,
       sourceSyncedAt: facility.sourceSyncedAt,
       source: facility.source,
     },
@@ -107,7 +109,8 @@ export async function listFacilityAppointments(actor: Actor | null, opts: { refe
   const rows = await prisma.appointment.findMany({
     where: {
       facilityId: actor.facilityId,
-      status: { in: ["CONFIRMED", "CHECKED_IN", "COMPLETED", "RESULT_AVAILABLE"] },
+      // Held and transfer-pending bookings show too, so the desk can confirm payments as they arrive.
+      status: { in: ["HELD", "PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN", "COMPLETED", "RESULT_AVAILABLE"] },
       ...(q ? { reference: { contains: q } } : {}),
     },
     include: { slot: true, patient: true, _count: { select: { results: true } } },

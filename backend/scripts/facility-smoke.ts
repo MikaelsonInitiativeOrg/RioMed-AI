@@ -25,7 +25,8 @@ async function main() {
 
   const reg = await signUp({
     username: `wuse_${tag}`, password: "abuja-clinic-2026", pin: "5831", displayName: "Smoke Admin", type: "facility",
-    registration: { name: `Smoke Test Clinic ${tag}`, type: "clinic", address: "Aminu Kano Crescent, Wuse 2, Abuja, Nigeria", phone: "", prices: { MALARIA_MP: "2800" } },
+    email: `wuse_${tag}@example.com`,
+    registration: { name: `Smoke Test Clinic ${tag}`, type: "clinic", address: "Aminu Kano Crescent, Wuse 2, Abuja, Nigeria", phone: "", prices: { MALARIA_MP: "2800" }, bankName: "Demo Bank", accountNumber: "0000000099", accountName: "Smoke Test Clinic" },
   });
   check("new facility account is active at once", reg.ok && reg.status === "active" && reg.role === "facility_admin", reg.ok ? "" : reg.error);
   if (!reg.ok) return;
@@ -36,6 +37,7 @@ async function main() {
     await prisma.slot.deleteMany({ where: { facilityId } });
     await prisma.facilityTest.deleteMany({ where: { facilityId } });
     await prisma.user.deleteMany({ where: { OR: [{ facilityId }, { username: { startsWith: `pat_${tag}` } }] } });
+    await prisma.emailMessage.deleteMany({ where: { OR: [{ facilityId }, { toAddress: { endsWith: `${tag}@example.com` } }] } });
     await prisma.facility.deleteMany({ where: { id: facilityId, source: "self_registered" } });
   };
   try {
@@ -47,7 +49,7 @@ async function main() {
     const hit = found.results.find((r) => r.id === facilityId);
     check("prompt 'malaria test in Abuja' finds it", !!hit && !!hit.nextSlot, hit ? `${hit.distanceKm.toFixed(1)} km, ₦${(hit.minPriceKobo ?? 0) / 100}` : `place ${found.place?.name ?? "none"}, ${found.results.length} results`);
 
-    const pat = await signUp({ username: `pat_${tag}`, password: "patient-pass-2026", pin: "6720", displayName: "Smoke Patient", type: "patient" });
+    const pat = await signUp({ username: `pat_${tag}`, password: "patient-pass-2026", pin: "6720", displayName: "Smoke Patient", type: "patient", email: `pat_${tag}@example.com` });
     if (pat.ok) {
       const slot = await prisma.slot.findFirst({ where: { facilityId, start: { gt: new Date(Date.now() + 3 * 60 * 60_000) } }, orderBy: { start: "asc" } });
       const held = slot ? await holdSlot({ userId: pat.userId, role: "patient" }, { slotId: slot.id, testCode: "MALARIA_MP" }) : null;

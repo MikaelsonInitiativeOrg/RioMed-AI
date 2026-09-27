@@ -1,7 +1,6 @@
 /** Server-side flow smoke test against the local DB. Run: npx tsx --conditions=react-server scripts/e2e-smoke.ts */
 import { prisma } from "../src/server/db";
-import { holdSlot, checkIn, uploadResult, confirmPaid, expireStaleHolds } from "../src/server/booking";
-import { completePayment, startPayment } from "../src/server/payments";
+import { holdSlot, checkIn, uploadResult, confirmPaid, expireStaleHolds, markTransferSent, confirmTransferReceived } from "../src/server/booking";
 import { can } from "../src/core/access";
 
 const ada = { userId: "usr_patient_ada", role: "patient" as const };
@@ -28,12 +27,15 @@ async function main() {
   const appt = (wins[0] as PromiseFulfilledResult<Awaited<ReturnType<typeof holdSlot>>>).value;
   check("amount locked server-side from catalogue", appt.amountKobo > 0 && Number.isInteger(appt.amountKobo));
 
-  // Payment (simulated because no Paystack key in this run).
-  const url = await startPayment({ ...appt.patientUserId === ada.userId ? ada : tunde }, appt.id);
-  const ref = new URL(url, "http://x").searchParams.get("reference")!;
-  check("simulated payment cannot be confirmed via the Paystack path", !(await completePayment(ref)).ok);
-  const paid = await completePayment(ref, { simulated: true });
-  check("payment confirms the booking", paid.ok && paid.outcome === "CONFIRMED");
+  // Payment by direct bank transfer: the patient says it was sent, the facility confirms receipt.
+  const payer = appt.patientUserId === ada.userId ? ada : tunde;
+  let blocked = false;
+  try { await confirmTransferReceived(otherStaff, appt.id); } catch { blocked = true; }
+  check("staff of another facility cannot confirm the transfer", blocked);
+  await markTransferSent(payer, appt.id);
+  check("transfer marked as sent keeps the slot held", (await prisma.appointment.findUnique({ where: { id: appt.id } }))?.status === "PENDING_PAYMENT");
+  await confirmTransferReceived(staff, appt.id);
+  check("facility confirming receipt confirms the booking", (await prisma.appointment.findUnique({ where: { id: appt.id } }))?.status === "CONFIRMED");
   check("confirm is idempotent", (await confirmPaid(appt.id)) === "ALREADY_CONFIRMED");
 
   // Access control on facility actions.

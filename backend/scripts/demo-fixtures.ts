@@ -1,8 +1,7 @@
 /** Demo data for walkthroughs: Ada gets one completed booking with a result PDF and one unpaid hold.
  *  Run: npx tsx --conditions=react-server scripts/demo-fixtures.ts  (writes to the configured DB) */
 import { prisma } from "../src/server/db";
-import { checkIn, holdSlot, uploadResult } from "../src/server/booking";
-import { completePayment, startPayment } from "../src/server/payments";
+import { checkIn, confirmPaid, holdSlot, uploadResult } from "../src/server/booking";
 
 const ada = { userId: "usr_patient_ada", role: "patient" as const };
 const staff = { userId: "usr_staff_alausa", role: "facility_staff" as const, facilityId: "fac_001" };
@@ -26,14 +25,12 @@ async function slot(facilityId: string, hoursAhead: number) {
 async function main() {
   const s1 = await slot("fac_001", 3);
   const done = await holdSlot(ada, { slotId: s1!.id, testCode: "MALARIA_MP" });
-  const ref = new URL(await startPayment(ada, done.id), "http://x").searchParams.get("reference")!;
-  await completePayment(ref, { simulated: true });
+  await confirmPaid(done.id); // demo fixture: as if the facility confirmed the transfer
   await checkIn(staff, done.id);
   await uploadResult(staff, done.id, { name: "malaria-result-demo.pdf", bytes: new TextEncoder().encode(PDF) });
   const s2 = await slot("fac_003", 26);
   const held = await holdSlot(ada, { slotId: s2!.id, testCode: "FBC" });
-  const heldRef = new URL(await startPayment(ada, held.id), "http://x").searchParams.get("reference")!;
-  console.log(JSON.stringify({ completed: done.id, held: held.id, payReference: heldRef }));
+  console.log(JSON.stringify({ completed: done.id, held: held.id }));
 }
 
 main().finally(() => prisma.$disconnect());

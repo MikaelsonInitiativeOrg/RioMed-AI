@@ -3,8 +3,7 @@ import Link from "next/link";
 import { Atkinson_Hyperlegible } from "next/font/google";
 import { getSessionUser } from "@/lib/session";
 import { RioMedLogo } from "@/components/Logo";
-import { paystackEnabled } from "@riomed/backend/server/paystack";
-import { BadgeCheck, Building2, CalendarCheck, FlaskConical, Info, Search, Settings, ShieldCheck, Tags, UserRound } from "lucide-react";
+import { BadgeCheck, Building2, CalendarCheck, FlaskConical, Info, Mail, Search, Settings, ShieldCheck, Tags, UserRound } from "lucide-react";
 import "./globals.css";
 
 // Atkinson Hyperlegible: designed for low-vision readability (ui-ux-pro-max healthcare pick).
@@ -29,15 +28,14 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getSessionUser();
   const mode = (process.env.AI_PROVIDER ?? "mock").toLowerCase();
-  const paystack = paystackEnabled(); // no key: the labelled simulated checkout is used, so say so
   const displayName = user ? user.name.split(" (")[0].split(",")[0] : null;
 
   const signedInAs = user?.role === "patient" ? "patient" : user?.role === "facility_staff" || user?.role === "facility_admin" ? "facility" : user?.role === "operator" ? "operator" : null;
   const tabs: Array<[string, React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>, string]> =
     signedInAs === "patient"
-      ? [["/", Search, "Search"], ["/dashboard", CalendarCheck, "Bookings"], ["/audit", ShieldCheck, "Access log"], ["/privacy", Settings, "Privacy"]]
+      ? [["/", Search, "Search"], ["/dashboard", CalendarCheck, "Bookings"], ["/inbox", Mail, "Inbox"], ["/audit", ShieldCheck, "Access log"], ["/privacy", Settings, "Privacy"]]
       : signedInAs === "facility"
-        ? [["/", Search, "Search"], ["/staff", Building2, "Desk"], ["/staff/catalogue", Tags, "Catalogue"]]
+        ? [["/", Search, "Search"], ["/staff", Building2, "Desk"], ["/staff/catalogue", Tags, "Catalogue"], ["/inbox", Mail, "Inbox"]]
         : signedInAs === "operator"
           ? [["/", Search, "Search"], ["/operator", BadgeCheck, "Approvals"]]
           : [["/", Search, "Search"], ["/account?mode=access", UserRound, "Sign in"], ["/about", Info, "How it works"]];
@@ -58,13 +56,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               Demo
             </span>
             <span aria-hidden>·</span>
-            <span>
-              {paystack ? (
-                <><span className="sm:hidden">Test payments</span><span className="hidden sm:inline">Paystack test mode</span></>
-              ) : (
-                <><span className="sm:hidden">Simulated pay</span><span className="hidden sm:inline">Simulated payments</span></>
-              )}
-            </span>
+            <span>Pay by bank transfer</span>
             <span aria-hidden>·</span>
             <span>
               AI: <strong className="font-bold text-foreground">{mode === "mock" ? "mock" : mode}</strong>
@@ -85,6 +77,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               {signedInAs === "patient" && <Link href="/dashboard" className={`hidden sm:inline-flex ${navLink}`}>My bookings</Link>}
               {signedInAs === "facility" && <Link href="/staff" className={`hidden sm:inline-flex ${navLink}`}>Facility desk</Link>}
               {signedInAs === "operator" && <Link href="/operator" className={`hidden sm:inline-flex ${navLink}`}>Approvals</Link>}
+              {user && <Link href="/inbox" className={`hidden sm:inline-flex ${navLink}`}>Inbox</Link>}
               <Link href="/about" className={`hidden sm:inline-flex ${navLink}`}>How it works</Link>
               {!user && (
                 <Link href="/account?mode=signup&type=facility" className={`hidden md:inline-flex ${navLink}`}>For clinics</Link>
