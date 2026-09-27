@@ -16,6 +16,18 @@ export function NearMeButton({ query, auto = true }: { query: string; auto?: boo
   const [found, setFound] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const autoTried = useRef(false);
+  const interacted = useRef(false);
+
+  // Any touch of the search box cancels the automatic jump to "near me" results.
+  useEffect(() => {
+    const mark = (e: Event) => {
+      if (e.target instanceof HTMLElement && e.target.closest("[data-search-box], form[role=search]")) interacted.current = true;
+    };
+    for (const t of ["focusin", "pointerdown", "paste", "input", "keydown"]) document.addEventListener(t, mark, true);
+    return () => {
+      for (const t of ["focusin", "pointerdown", "paste", "input", "keydown"]) document.removeEventListener(t, mark, true);
+    };
+  }, []);
 
   function locate(fromAuto = false) {
     if (!("geolocation" in navigator)) {
@@ -30,12 +42,22 @@ export function NearMeButton({ query, auto = true }: { query: string; auto?: boo
         const lng = pos.coords.longitude.toFixed(3);
         const q = query.trim() || "hospitals, clinics and health centres near me";
         const href = `/?q=${encodeURIComponent(q)}&lat=${lat}&lng=${lng}`;
-        // Never pull someone away mid-typing: an automatic fix waits for a tap instead.
+        // Never pull someone away while they use the search box (tapped, typed or pasted since
+        // the page loaded): an automatic fix waits for a tap instead.
         const el = document.activeElement;
-        const typing = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el.value.trim().length > 0 : false;
-        if (fromAuto && typing) {
+        const typing = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el.value.trim().length > 0 || el.matches("[data-search-box]") : false;
+        if (fromAuto) {
+          // Automatic: offer the result, then move only if the person leaves the page alone for a
+          // moment. Any tap, typing or paste in the search box cancels it, so pasting never gets lost.
           setFound(href);
           setState("ready");
+          if (!typing && !interacted.current) {
+            setTimeout(() => {
+              const now = document.activeElement;
+              const busy = now instanceof HTMLInputElement && (now.matches("[data-search-box]") || now.value.trim().length > 0);
+              if (!interacted.current && !busy) router.push(href);
+            }, 3000);
+          }
           return;
         }
         router.push(href);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { detectAccountIntent, looksLikeCredential } from "@riomed/backend/core/intent/account";
 import { Search } from "lucide-react";
@@ -10,20 +10,28 @@ interface HomeComposerProps {
   autoFocus?: boolean;
 }
 
+/**
+ * The search box. Uncontrolled on purpose: React never rewrites what the person typed or pasted,
+ * even if they paste before the page has finished loading on a slow connection. The form is also a
+ * plain GET to "/", so it still works before the JavaScript arrives (src/proxy.ts then applies the
+ * same credential and account rules on the server).
+ */
 export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeComposerProps) {
   const router = useRouter();
-  const [query, setQuery] = useState(initialQuery);
-  function handleSubmit(e: React.FormEvent) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const q = query.trim();
+    const input = inputRef.current;
+    const q = (input?.value ?? "").trim();
     if (!q) {
-      document.getElementById("composer-input")?.focus();
+      input?.focus();
       return;
     }
     // Checked in the browser first, so a password or PIN typed here never leaves the device
     // in a URL. The server (src/proxy.ts) applies the same rules again.
     if (looksLikeCredential(q)) {
-      setQuery("");
+      if (input) input.value = "";
       router.push("/account?mode=warning");
       return;
     }
@@ -37,6 +45,8 @@ export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeCompo
 
   return (
     <form
+      action="/"
+      method="get"
       onSubmit={handleSubmit}
       role="search"
       className="flex items-center gap-2 rounded-xl border border-border-strong bg-surface p-1.5 pl-4 shadow-sm transition-shadow duration-150 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/15"
@@ -46,14 +56,20 @@ export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeCompo
         Describe what you need: a test, a place, or &quot;create account&quot;
       </label>
       <input
+        ref={inputRef}
         id="composer-input"
         name="q"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        type="search"
+        enterKeyHint="search"
+        defaultValue={initialQuery}
+        key={initialQuery}
         maxLength={1000}
         autoFocus={autoFocus}
+        autoComplete="off"
+        spellCheck={false}
         placeholder="e.g. malaria test near Ikeja tomorrow"
-        className="min-h-[44px] min-w-0 flex-1 border-none bg-transparent text-base text-foreground outline-none placeholder:text-subtle-foreground"
+        data-search-box=""
+        className="min-h-[44px] min-w-0 flex-1 border-none bg-transparent text-base text-foreground outline-none placeholder:text-subtle-foreground [&::-webkit-search-cancel-button]:cursor-pointer"
       />
       <button
         type="submit"
