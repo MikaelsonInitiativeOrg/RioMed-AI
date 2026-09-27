@@ -24,15 +24,15 @@ export default async function PrivacyPage() {
       {/* Header */}
       <div>
         <h1 className="font-heading text-xl sm:text-2xl font-bold text-[#0A5347]">
-          Privacy, Dependants &amp; Data Rights
+          Privacy &amp; your data
         </h1>
         <p className="mt-1 text-xs sm:text-sm text-[#4B6560]">
-          Exercise your rights under the Nigeria Data Protection Act (NDPA): manage family dependants, download your personal records, or request data deletion.
+          Download a copy of your data. More controls are coming as RioMed works toward the Nigeria Data Protection Act (NDPA) requirements.
         </p>
       </div>
 
       {/* Privacy Manager interactive tools */}
-      <PrivacyManager userName={actor.name} />
+      <PrivacyManager />
     </div>
   );
 }

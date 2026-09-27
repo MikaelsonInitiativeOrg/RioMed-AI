@@ -23,7 +23,8 @@ The whole demo journey works locally: prompt → validated intent → ranked fac
 | Paystack init, verify, webhook | FR-050 to FR-056 | 1 | code done, **untested against Paystack** | – | tests/core/payments (signature and verify) | – | – |
 | Results vault (DB-stored, signed links) | FR-060 to FR-066 | 1 | done (demo variant) | – | e2e smoke | – | – |
 | Access control | SEC-007, 11.4 | 1 | done | – | tests/core/access | – | – |
-| Demo sign-in | FR-001 to FR-003 (stub) | 1 | done (stub) | – | – | – | – |
+| Demo sign-in | FR-001 to FR-003 (stub) | 1 | done (stub, demo accounts only) | – | – | – | – |
+| Accounts from the search box: username, password, PIN; facility approval | FR-008 | 3* | done (backend, popup, operator page) | – | tests/core/account-intent, credentials (pending); scripts/accounts-smoke.ts (15 checks, implementer-written) | – | – |
 | Live nearby places (Google Maps via Gemini) | FR-027 | 2 | done (backend, API and component); **home-page wiring is with the frontend agent** | – | tests/core/live-places (pending) | – | – |
 | No tests from symptoms guard | FR-017 | 2 | done | – | tests/core/support, ai (pending) | – | – |
 | Payouts | FR-059 to FR-059g | 3 | not started (out of scope today) | – | – | – | – |
@@ -34,7 +35,7 @@ The whole demo journey works locally: prompt → validated intent → ranked fac
 
 ### TODO-001: Hosted demo
 PRD: 15.1
-Status: blocked (needs a Neon or Supabase `DATABASE_URL` and a Vercel project from the owner)
+Status: done 2026-09-27 12:30. https://riomed-ai.vercel.app (Vercel team mikaelson-initiative-orgs-projects; Neon Postgres, us-east-1). Deployed from branch core/accounts with `vercel deploy --prod`; not yet connected to git auto-deploys
 Tasks:
 - [ ] Switch the `prisma/schema.prisma` provider to `postgresql`, then `db push` and seed against Neon
 - [ ] Set Vercel env: `DATABASE_URL`, `SESSION_SECRET`, `AI_*`, `PAYSTACK_SECRET_KEY` (test), `APP_URL`
@@ -62,6 +63,8 @@ Least confident about:
 
 ## Known divergences from the PRD
 
+- FR-008 accounts are tier 3 (auth). For the hackathon they hold synthetic data only. Still missing before real use: a second independent review, a per-IP login rate limit (only per-account lockout exists), password reset, and moving the search form from GET to POST. A password typed into search reaches the server URL once before the proxy redirects it away.
+
 | What | PRD says | Code does | Why | Resolution by |
 |---|---|---|---|---|
 | Result storage | Object storage with 5-minute pre-signed URLs (FR-061, FR-063) | PDF bytes stored in the DB, served through an HMAC-signed 5-minute link plus a session permission check | No storage account today. Same access properties | Post-hackathon (move to Supabase Storage) |
@@ -84,6 +87,6 @@ Least confident about:
 
 - NFR-001: the LLM parse measured p95 1.24 s with sequential requests. It has not been measured under concurrent load. The timeout is 2 s (AI_TIMEOUT_MS).
 - Paystack checkout, webhook and refund against the real test API.
-- Behaviour on Postgres under concurrency (SQLite only so far).
+- Postgres concurrency is now tested on Neon. 10 concurrent holds on a 2-place slot gave exactly 2 successes and no overbooking. Only one run, from a single machine.
 - The emergency red-flag list has not been clinically reviewed.
 - UI on real low-end Android devices and slow networks (NFR-002).

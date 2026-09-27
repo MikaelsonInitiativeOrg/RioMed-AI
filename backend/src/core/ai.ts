@@ -38,7 +38,7 @@ export function buildSystemPrompt(now: Date): string {
     "Return ONLY a JSON object with keys: intent, tests, locationQuery, when, facilityType, confidence.",
     'intent: one of "find_test" (a test is named), "find_facility" (a place or facility type but no test), "emergency", "unsupported".',
     "tests: array of codes from the catalogue below ONLY. Never invent codes. If the user only describes symptoms, return [] (do not recommend tests).",
-    "locationQuery: the place the user mentions, corrected to the closest known place name if misspelled, else null. Never output coordinates.",
+    "locationQuery: the place the user mentions. If it is a misspelling of a known place (e.g. \"ikja\" -> \"Ikeja\"), use the known name. If it is a real place that is not in the known list (e.g. \"Ikorodu\", \"Allen Avenue, Ikeja\"), return it exactly as the user wrote it; never swap it for a different or larger place. Null if no place. Never output coordinates.",
     'when: null, or {"day": "today"|"tomorrow"|"monday".."sunday"|"YYYY-MM-DD"|null, "part": "morning"|"afternoon"|"evening"|"any"}. Keep the user\'s own day word ("today", "tomorrow", a weekday); use YYYY-MM-DD only if the user gave a calendar date. "tonight" = today evening. A part with no day ("in the morning") = {"day": null, ...}. A day with no part = part "any". No day and no part = null.',
     'facilityType: null or one of "hospital","clinic","laboratory","diagnostic_centre","primary_health_centre".',
     "confidence: number 0..1.",

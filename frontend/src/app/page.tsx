@@ -5,8 +5,10 @@ import { EmergencyBanner } from "@/components/EmergencyBanner";
 import { SearchRefine } from "@/components/SearchRefine";
 import { FacilityCard } from "@/components/FacilityCard";
 import { EmptyState } from "@/components/EmptyState";
+import { LiveNearby } from "@/components/LiveNearby";
 import { RioMedLogo } from "@/components/Logo";
-import { ChatAccountFlow } from "@/components/ChatAccountFlow";
+import { redirect } from "next/navigation";
+import { detectAccountIntent, looksLikeCredential } from "@riomed/backend/core/intent/account";
 import { HomeComposer } from "@/components/HomeComposer";
 import { runPromptSearch, searchWithIntent, type Found, type SearchView } from "@riomed/backend/server/search";
 
@@ -31,15 +33,15 @@ export default async function Home(props: PageProps<"/">) {
   let view: (Found & { intent: SearchIntent } & Partial<Pick<SearchView, "ai" | "emergency" | "totalMs">>) | null = null;
   let error: string | null = null;
 
-  const isCreateAccountPrompt = /create.*account|sign.*up|register|new.*account/i.test(q);
-  const isAccessDashboardPrompt = /access.*dashboard|open.*dashboard|my.*dashboard|patient.*dashboard|clinic.*dashboard|facility.*dashboard|^dashboard$/i.test(q);
-  const isAccountAction = isCreateAccountPrompt || isAccessDashboardPrompt;
-  const isClinicTarget = /clinic|facility|staff|desk|lab/i.test(q);
+  // Account prompts open the real account popup (FR-008); src/proxy.ts normally redirects first.
+  if (q && looksLikeCredential(q)) redirect("/account?mode=warning");
+  const account = q ? detectAccountIntent(q) : null;
+  if (account) redirect(`/account?mode=${account.action === "create" ? "signup" : "access"}&type=${account.type}`);
 
-  if (q && !isAccountAction) {
+  if (q) {
     if (q.length > 1000) error = "Please keep your request under 1,000 characters.";
     else view = await runPromptSearch(q);
-  } else if (!isAccountAction && area) {
+  } else if (area) {
     const test = one(sp.test);
     const day = one(sp.day) || null;
     const partRaw = one(sp.part);
@@ -60,7 +62,7 @@ export default async function Home(props: PageProps<"/">) {
       {/* ================= CHAT / CONTENT AREA ================= */}
       <div className="flex-1 flex flex-col justify-center">
         {/* State 1: Empty Home State matching uploaded screenshot exactly */}
-        {!view && !error && !isAccountAction && (
+        {!view && !error && (
           <div className="my-auto py-8 sm:py-12 flex flex-col items-center justify-center text-center gap-5">
             {/* Center Logo Mark (width 56, height 56) */}
             <RioMedLogo size={56} />
@@ -104,23 +106,6 @@ export default async function Home(props: PageProps<"/">) {
         )}
 
         {/* State 2: Account Creation or Dashboard Access Flow via Prompt */}
-        {isAccountAction && (
-          <div className="w-full max-w-3xl mx-auto space-y-6 pb-6 animate-in fade-in duration-300">
-            {/* User message bubble */}
-            <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl rounded-br-xs bg-[#0E6B5C] px-4 py-3 text-sm text-white shadow-xs">
-                {q}
-              </div>
-            </div>
-
-            <ChatAccountFlow
-              initialPrompt={q}
-              initialMode={isCreateAccountPrompt ? "create" : "pin"}
-              targetRole={isClinicTarget ? "facility_staff" : "patient"}
-            />
-          </div>
-        )}
-
         {/* State 3: Error query */}
         {error && (
           <div className="my-auto max-w-xl mx-auto w-full p-4 rounded-2xl border border-[#FBE9E7] bg-[#FBE9E7] text-sm text-[#8A251C]">
@@ -230,13 +215,18 @@ export default async function Home(props: PageProps<"/">) {
                   </div>
                 )}
 
-                {!view.place && view.intent.intent !== "unsupported" && (
+                {!view.place && view.intent.intent !== "unsupported" && !view.intent.locationQuery && (
                   <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
                     <p className="font-bold">Location required</p>
                     <p className="mt-1">
                       Where are you? Choose an area above so we can find facilities near you.
                     </p>
                   </div>
+                )}
+                {!view.place && view.intent.locationQuery && (
+                  <p className="rounded-2xl border border-[#E3E0D6] bg-white p-4 text-sm text-[#4B6560]">
+                    RioMed has no partner facilities in {view.intent.locationQuery} yet, so booking isn&apos;t available there. Here are places from Google Maps you can contact.
+                  </p>
                 )}
 
                 {/* Facilities List */}
@@ -277,6 +267,11 @@ export default async function Home(props: PageProps<"/">) {
                       </div>
                     )}
                   </section>
+                )}
+
+                {/* FR-027: live nearby places from Google Maps (unverified, not bookable) */}
+                {!view.emergency?.isEmergency && (view.intent.locationQuery || view.place?.name) && (
+                  <LiveNearby address={(view.intent.locationQuery ?? view.place?.name)!} />
                 )}
               </div>
             </div>

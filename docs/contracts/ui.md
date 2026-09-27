@@ -76,6 +76,26 @@ This is the boundary between the **frontend** (UI design, owned by the frontend 
 - **Data addition:** `SearchView.results[].ownership` ("public" | "private") is now available,
   as requested.
 
+## Accounts (FR-008, added 2026-09-27)
+
+- **Opening the popup:** typing "create an account", "access dashboard", "register my clinic"
+  and similar phrases into search sends the user to `/account?...`. `src/proxy.ts` does this with
+  fixed rules, so no page change is needed. `/account` renders a popup-style dialog from
+  `components/AccountDialog.tsx`: `SignUpDialog`, `PasswordDialog`, `PinDialog`,
+  `PendingDialog` or `CredentialWarningDialog`.
+  - Restyle freely. You may also turn it into a real modal over the home page with an
+    intercepting route.
+  - Keep the form field names (`displayName`, `username`, `password`, `pin`, `facilityId`,
+    `type`, `next`) and the actions `signUpAction`, `passwordLoginAction`, `pinUnlockAction`
+    and `forgetDeviceAction`.
+- **Never collect a password or PIN anywhere else**, especially the search box. Keep
+  `type="password"` on both fields, plus `inputMode="numeric"` on the PIN.
+- **`/operator`** (operator role) approves facility accounts through `decideAccountAction`.
+- **`getSessionUser()`** now also returns `pending: boolean`. A pending facility account is
+  signed in, but has no facility access.
+- **Nav request:** add a "Sign in / Create account" link that points to `/account?mode=access`
+  and `/account?mode=signup`. Keep "Demo sign-in" too.
+
 ## Backend-owned files inside `frontend/` (do not change behaviour)
 
 These are glue code: server actions, route handlers and the session cookie. Restyling is not
@@ -83,6 +103,8 @@ relevant to them. Change them only through a request below.
 
 - `app/actions.ts`
 - `app/api/**`
+- `app/account/page.tsx`, `app/operator/page.tsx` (data flow; styling is yours)
+- `proxy.ts`
 - `app/pay/callback/route.ts`
 - `lib/session.ts`
 

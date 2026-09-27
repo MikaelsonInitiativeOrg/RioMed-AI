@@ -1,19 +1,31 @@
-// Hackathon build: SQLite locally. For the hosted demo, switch provider to "postgresql"
-// and point DATABASE_URL at Neon/Supabase (docs/PRD.md section 15.1).
+// Postgres on Neon. DATABASE_URL is the pooled connection used by the app; DIRECT_URL is the
+// direct connection used by `prisma db push` and migrations.
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"] // rhel-openssl-3.0.x = Vercel's runtime
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id           String        @id
-  name         String
-  role         String // patient | facility_staff | facility_admin | operator
-  facilityId   String?
+  id                String        @id
+  name              String
+  role              String // patient | facility_staff | facility_admin | operator
+  facilityId        String?
+  /// Real accounts (username + password + PIN). Demo accounts have none of these and isDemo = true.
+  username          String?       @unique
+  passwordHash      String?
+  pinHash           String?
+  status            String        @default("active") // active | pending (facility accounts awaiting operator approval) | rejected
+  isDemo            Boolean       @default(false)
+  failedLogins      Int           @default(0)
+  failedPins        Int           @default(0)
+  lockedUntil       DateTime?
+  createdAt         DateTime      @default(now())
   facility     Facility?     @relation(fields: [facilityId], references: [id])
   appointments Appointment[]
 }

@@ -32,7 +32,7 @@ export default async function ResultViewerPage(props: PageProps<"/appointments/[
         </Link>
         <EmptyState
           title="Result in progress"
-          description={`Your ${testName} was received by ${a.facility.name}. Once testing is finalized and the medical scientist signs off, your official PDF will appear here.`}
+          description={`Your ${testName} was received by ${a.facility.name}. Your PDF will appear here once the facility uploads it.`}
           actionHref={`/appointments/${id}`}
           actionLabel="View booking status"
           hint="We will notify you immediately once the result PDF is ready."
@@ -175,7 +175,7 @@ export default async function ResultViewerPage(props: PageProps<"/appointments/[
 
       {/* Footer Audit Notice matching Mockup 7 */}
       <div className="text-center text-[11px] text-[#8B9490] pt-2 space-y-1">
-        <p>Viewed by you · just now · this access was logged under NDPA regulations.</p>
+        <p>Each time this PDF is opened, it is recorded in your access history.</p>
         <p>RioMed does not interpret or diagnose results. Please consult your clinician.</p>
       </div>
     </div>

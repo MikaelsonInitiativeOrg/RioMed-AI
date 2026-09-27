@@ -8,8 +8,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# RioMed frontend rules
+# RioMed
 
-Before changing anything here, read `../AGENTS.md` (ownership, git rules, no AI attribution) and
-`../docs/contracts/ui.md` (the data each page gets, the actions it may call, required labels and states).
-Never import the database or put business logic in the UI.
+Read `../AGENTS.md` and `../docs/contracts/ui.md` before changing anything here.

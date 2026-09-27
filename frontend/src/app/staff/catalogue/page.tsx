@@ -1,37 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
-import { listFacilityAppointments } from "@riomed/backend/server/queries";
+import { getFacilityCatalogue } from "@riomed/backend/server/queries";
+import { getTest } from "@riomed/backend/core/catalog";
 import { formatNaira } from "@riomed/backend/core/money";
 
 export const dynamic = "force-dynamic";
 
-interface CatalogItem {
-  code: string;
-  name: string;
-  priceKobo: number;
-  tatHours: number;
-  fasting: boolean;
-  status: "ACTIVE" | "PAUSED";
-}
-
-const DEFAULT_CATALOG: CatalogItem[] = [
-  { code: "malaria_rdt", name: "Malaria (MP) Rapid Diagnostic Test", priceKobo: 3500_00, tatHours: 2, fasting: false, status: "ACTIVE" },
-  { code: "widal", name: "Widal Agglutination (Typhoid)", priceKobo: 4500_00, tatHours: 4, fasting: false, status: "ACTIVE" },
-  { code: "fbc", name: "Full Blood Count (FBC/CBC)", priceKobo: 6000_00, tatHours: 6, fasting: false, status: "ACTIVE" },
-  { code: "fasting_blood_glucose", name: "Fasting Blood Glucose (FBG)", priceKobo: 2500_00, tatHours: 1, fasting: true, status: "ACTIVE" },
-  { code: "lipid_profile", name: "Lipid Profile Panel", priceKobo: 9500_00, tatHours: 8, fasting: true, status: "ACTIVE" },
-  { code: "urinalysis", name: "Urinalysis Dipstick", priceKobo: 2000_00, tatHours: 1, fasting: false, status: "ACTIVE" },
-  { code: "hep_b", name: "Hepatitis B Surface Antigen (HBsAg)", priceKobo: 4000_00, tatHours: 3, fasting: false, status: "ACTIVE" },
-  { code: "hiv_screening", name: "HIV 1 & 2 Rapid Screening", priceKobo: 3000_00, tatHours: 1, fasting: false, status: "ACTIVE" },
-];
+// Tests that need fasting beforehand (shown as preparation). Prices and turnaround come from the database.
+const FASTING = new Set(["FBS", "LIPID"]);
 
 export default async function StaffCataloguePage() {
   const actor = await getSessionUser();
   if (!actor) redirect("/demo-login?next=/staff/catalogue");
-  const desk = await listFacilityAppointments(actor);
-  if (!desk) redirect("/dashboard");
-  const { facility } = desk;
+  const catalogue = await getFacilityCatalogue(actor);
+  if (!catalogue) redirect(actor.role === "patient" ? "/dashboard" : "/account?mode=access");
+  const { facility } = catalogue;
+  const items = catalogue.tests.map((t) => ({ ...t, name: getTest(t.code)?.name ?? t.code, fasting: FASTING.has(t.code) }));
 
   return (
     <div className="w-full space-y-6 pb-12">
@@ -162,7 +147,7 @@ export default async function StaffCataloguePage() {
 
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-[#0A5347] bg-[#CDE8E1] px-3 py-1 rounded-full">
-                  ✓ Synchronized with Lagos Registry
+                  Demo data
                 </span>
               </div>
             </div>
@@ -179,7 +164,7 @@ export default async function StaffCataloguePage() {
                 </div>
 
                 <div className="divide-y divide-[#F0EEE7]">
-                  {DEFAULT_CATALOG.map((item) => (
+                  {items.map((item) => (
                     <div
                       key={item.code}
                       className="grid grid-cols-[1.5fr_110px_90px_100px_90px] px-4 py-3.5 items-center text-xs hover:bg-[#F3FAF8]/40 transition"
@@ -198,7 +183,7 @@ export default async function StaffCataloguePage() {
                       </div>
 
                       <div className="text-[#4B6560]">
-                        ~{item.tatHours} hrs
+                        ~{item.turnaroundHours} hrs
                       </div>
 
                       <div>

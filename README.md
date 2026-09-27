@@ -29,6 +29,12 @@ Maps grounding. Only the places Google Maps returns are shown, never the model's
 are labelled unverified, can't be booked, and carry Google Maps attribution. Live search works
 for areas RioMed doesn't cover yet, for example Ikorodu.
 
+**Accounts from the search box:**
+- Type "create an account" (or "register my clinic") and a sign-up popup asks for a username, password and PIN.
+- Type "access dashboard" and the popup asks for your PIN on a device you've used before, or your password on a new one.
+- Facility accounts wait for operator approval on `/operator` before they can see any bookings.
+- Passwords and PINs never go through search or the AI. If you type one into search, you get a warning instead.
+
 **Evaluation:** 120 hand-labelled prompts in [backend/eval/intents.jsonl](backend/eval/intents.jsonl).
 Latest run with `gemini-3.5-flash-lite`, shown on `/about`:
 
@@ -44,12 +50,14 @@ The rule layer runs first for emergencies and takes over whenever the AI is slow
 unavailable. Since that run, a guard also drops any test the user didn't name, so the model
 can't suggest tests from symptoms. It closes the 2 cases the evaluation caught.
 
+**Live demo:** https://riomed-ai.vercel.app
+
 ## Run it
 
 ```sh
 npm install
 cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local   # add AI / Paystack test keys here if you have them
+cp frontend/.env.example frontend/.env.local   # DATABASE_URL + DIRECT_URL (Postgres/Neon), AI and Paystack test keys
 npm run db:push && npm run db:seed
 npm run dev                                    # http://localhost:3000
 ```
@@ -75,6 +83,7 @@ AI_PROVIDER=ollama AI_MODEL=<model> AI_BASE_URL=http://localhost:11434/v1
 ```sh
 npm test        # 648 contract tests for backend/src/core
 npm run smoke   # booking race, payment, access, upload, late-payment refund (local DB)
+npm run smoke:accounts -w @riomed/backend   # sign-up, password, PIN, lockout, facility approval
 npm run eval    # AI-010 evaluation
 npm run typecheck && npm run lint && npm run build
 ```
@@ -97,5 +106,4 @@ This is an npm-workspaces monorepo:
 - [AGENTS.md](AGENTS.md) sets out who owns what when several AI agents work on the repo.
 - `reference/ai-starters/` holds the organisers' starter templates that the AI adapter is ported from.
 
-Stack: Next.js 16, TypeScript (strict), Tailwind, Zod, Prisma (SQLite locally, Postgres for
-hosting) and Paystack.
+Stack: Next.js 16, TypeScript (strict), Tailwind, Zod, Prisma on Postgres (Neon) and Paystack.

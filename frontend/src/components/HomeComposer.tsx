@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AccountDashboardModal } from "@/components/AccountDashboardModal";
+import { detectAccountIntent, looksLikeCredential } from "@riomed/backend/core/intent/account";
 
 interface HomeComposerProps {
   initialQuery?: string;
@@ -11,34 +11,22 @@ interface HomeComposerProps {
 export function HomeComposer({ initialQuery = "" }: HomeComposerProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"create" | "pin">("pin");
-  const [targetRole, setTargetRole] = useState<"patient" | "facility_staff">("patient");
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
-
-    const isCreate = /create.*account|sign.*up|register|new.*account/i.test(q);
-    const isAccess = /access.*dashboard|open.*dashboard|my.*dashboard|patient.*dashboard|clinic.*dashboard|facility.*dashboard|^dashboard$/i.test(q);
-    const isClinic = /clinic|facility|staff|desk|lab/i.test(q);
-
-    if (isCreate) {
-      setModalMode("create");
-      setTargetRole(isClinic ? "facility_staff" : "patient");
-      setModalOpen(true);
+    // Checked in the browser first, so a password or PIN typed here never leaves the device
+    // in a URL. The server (src/proxy.ts) applies the same rules again.
+    if (looksLikeCredential(q)) {
+      setQuery("");
+      router.push("/account?mode=warning");
       return;
     }
-
-    if (isAccess) {
-      setModalMode("pin");
-      setTargetRole(isClinic ? "facility_staff" : "patient");
-      setModalOpen(true);
+    const account = detectAccountIntent(q);
+    if (account) {
+      router.push(`/account?mode=${account.action === "create" ? "signup" : "access"}&type=${account.type}`);
       return;
     }
-
-    // Default search routing
     router.push(`/?q=${encodeURIComponent(q)}`);
   }
 
@@ -78,13 +66,6 @@ export function HomeComposer({ initialQuery = "" }: HomeComposerProps) {
         </button>
       </form>
 
-      {/* Account / Dashboard Modal triggered by prompt */}
-      <AccountDashboardModal
-        isOpen={modalOpen}
-        initialMode={modalMode}
-        targetRole={targetRole}
-        onClose={() => setModalOpen(false)}
-      />
     </>
   );
 }

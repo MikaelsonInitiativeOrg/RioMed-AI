@@ -389,3 +389,64 @@ export function livePlacesEnabled(env?: Record<string, string | undefined>): boo
 - **`livePlacesEnabled`:** true only when `AI_PROVIDER` is "gemini", `AI_API_KEY` is set, and
   `LIVE_PLACES` is not "off".
 - **`findLivePlaces`:** network code. It is not unit-tested beyond these pure parts.
+
+## `@/core/intent` account rules (added 2026-09-27, FR-008)
+
+```ts
+export type AccountAction = "create" | "access";
+export type AccountType = "patient" | "facility";
+export interface AccountIntent { action: AccountAction; type: AccountType }
+export function detectAccountIntent(text: string): AccountIntent | null;
+export function looksLikeCredential(text: string): boolean;
+```
+
+**`detectAccountIntent`** uses fixed rules only, with no AI. It is case-insensitive and matches
+whole words or phrases. It never throws.
+
+- **"create":** any of "create an account", "create account", "create my account", "sign up",
+  "signup", "register", "open an account", "open account", "new account", "make an account" or
+  "join riomed".
+- **"access":** any of "access dashboard", "access my dashboard", "open dashboard", "open my
+  dashboard", "my dashboard", "dashboard", "log in", "login", "sign in", "signin", "my account",
+  "my bookings", "my results" or "facility desk".
+- If both match, the action is "create".
+- **Search wins.** The result is `null` if the text also contains any of "test", "near",
+  "around", "book", "appointment", "find" or "where". For example, "register for a malaria test
+  near Yaba" gives null.
+- **Type:** "facility" if the text contains any of "clinic", "facility", "hospital", "lab",
+  "laboratory", "diagnostic", "centre", "center", "staff" or "phc". Otherwise "patient".
+- The result is `null` for non-strings, empty text, text over 200 characters, or no match.
+
+**`looksLikeCredential`** returns true when any of these hold:
+
+- the whole text, trimmed, is 4–6 digits;
+- a keyword (password, passcode, passwd or pin) is followed by "is", ":", "=" or "na" and then a
+  token of 3 or more characters;
+- a keyword is followed by a token that contains a digit.
+
+It returns false whenever the text contains "forgot", "forget", "reset" or "change". Examples:
+- true: "my password is abc12345", "pin: 4821", "4821", "password hunter22", "password na mylove"
+- false: "I forgot my password", "pin test", "what is a pin"
+
+## `@/core/credentials` (added 2026-09-27)
+
+```ts
+export type Check = { ok: true; value: string } | { ok: false; error: string };
+export function checkUsername(raw: unknown): Check;
+export function checkPassword(raw: unknown, username?: string): Check;
+export function checkPin(raw: unknown): Check;
+export const MAX_FAILED_ATTEMPTS: 5;
+export const LOCK_MINUTES: 15;
+```
+
+- **`checkUsername`:** the value is trimmed and lowercased. It must match `^[a-z0-9_.]{3,30}$`
+  and must not start or end with "." or "_".
+- **`checkPassword`:** 8–128 characters. It must not contain the username (case-insensitive).
+  It rejects a single repeated character and the common passwords "password", "password1",
+  "12345678", "123456789" and "qwertyui", compared case-insensitively. The value is returned
+  unchanged.
+- **`checkPin`:** exactly 4–6 digits, as a string. It rejects all-same digits (for example 1111)
+  and runs that are ascending or descending with wrap-around. Wrap-around means runs inside
+  "0123456789012345" (for example 1234, 7890, 890123) or "9876543210987654" (for example 4321,
+  0987).
+- Non-string input gives `{ ok: false }`. None of these functions throw.
