@@ -111,10 +111,13 @@ export async function findLivePlaces(
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.AI_API_KEY! },
       body: JSON.stringify({
         model,
-        input: `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres near this location in Nigeria: ${address}. Only medical facilities.`,
+        input: input.origin && !sanitizeAddress(input.address)
+          ? // Device location: search around the exact coordinates, wherever they are.
+            `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres closest to latitude ${input.origin.lat}, longitude ${input.origin.lng}. Only medical facilities, nearest first.`
+          : `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres near this location in Nigeria: ${address}. Only medical facilities.`,
         tools: [tool],
       }),
-      signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 25_000), // loads in the background; Maps grounding takes 5–10 s
     });
     if (!res.ok) return { status: "unavailable", places: [], reason: res.status === 429 ? "Live search quota reached, try again later" : `Live search error ${res.status}` };
     const places = extractPlaces(await res.json());

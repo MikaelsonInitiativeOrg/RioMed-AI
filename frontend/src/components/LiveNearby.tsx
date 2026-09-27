@@ -20,7 +20,8 @@ type State =
 export function LiveNearby({ address, lat, lng }: { address: string; lat?: number; lng?: number }) {
   // Results are tagged with the address they belong to; a new address shows "loading" until its own result arrives.
   const [loaded, setLoaded] = useState<{ address: string; state: State } | null>(null);
-  const key = `${address}|${lat ?? ""},${lng ?? ""}`;
+  const [attempt, setAttempt] = useState(0); // user-initiated retry only (no automatic retries: quota)
+  const key = `${address}|${lat ?? ""},${lng ?? ""}|${attempt}`;
   const state: State = loaded && loaded.address === key ? loaded.state : { kind: "loading" };
 
   useEffect(() => {
@@ -46,7 +47,14 @@ export function LiveNearby({ address, lat, lng }: { address: string; lat?: numbe
       <h2 className="font-semibold">{lat != null ? "Hospitals, clinics and health centres near you" : `More places near ${address}`}</h2>
       <p className="text-xs text-slate-600">Live from Google Maps · not verified by RioMed · booking not available. Call ahead to check which tests they offer.</p>
       {state.kind === "loading" && <p className="mt-3 text-sm text-slate-500 animate-pulse">Searching Google Maps…</p>}
-      {state.kind === "error" && <p className="mt-3 text-sm text-amber-800">{state.reason}.</p>}
+      {state.kind === "error" && (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <p className="text-sm text-amber-800">{state.reason}.</p>
+          <button type="button" onClick={() => setAttempt((n) => n + 1)} className="inline-flex min-h-[44px] items-center rounded-lg border border-sky-900/20 px-3 text-sm text-sky-900 hover:bg-sky-50">
+            Try again
+          </button>
+        </div>
+      )}
       {state.kind === "ok" && state.places.length === 0 && <p className="mt-3 text-sm">No live results for this location.</p>}
       {state.kind === "ok" && state.places.length > 0 && (
         <ul className="mt-3 divide-y">
