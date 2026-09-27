@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { detectAccountIntent, looksLikeCredential } from "@riomed/backend/core/intent/account";
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 interface HomeComposerProps {
   initialQuery?: string;
@@ -19,6 +19,8 @@ interface HomeComposerProps {
 export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeComposerProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  // A search takes 1–5 s (AI + facilities); show it's working straight away instead of looking stuck.
+  const [searching, startSearch] = useTransition();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,7 +42,7 @@ export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeCompo
       router.push(`/account?mode=${account.action === "create" ? "signup" : "access"}&type=${account.type}`);
       return;
     }
-    router.push(`/?q=${encodeURIComponent(q)}`);
+    startSearch(() => router.push(`/?q=${encodeURIComponent(q)}`));
   }
 
   return (
@@ -73,9 +75,12 @@ export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeCompo
       />
       <button
         type="submit"
-        className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-white transition-colors duration-150 hover:bg-primary-strong"
+        disabled={searching}
+        aria-busy={searching}
+        className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-bold text-white transition-colors duration-150 hover:bg-primary-strong disabled:opacity-80"
       >
-        Search
+        {searching && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+        {searching ? "Searching…" : "Search"}
       </button>
     </form>
   );
