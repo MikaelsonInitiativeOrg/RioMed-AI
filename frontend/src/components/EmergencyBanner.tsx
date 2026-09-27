@@ -8,13 +8,13 @@ export function EmergencyBanner({ matched }: { matched: string[] }) {
     <section
       role="alert"
       aria-live="assertive"
-      className="overflow-hidden rounded-2xl bg-[#C1352B] p-5 text-white shadow-md space-y-3"
+      className="overflow-hidden rounded-2xl bg-danger p-5 text-white shadow-md space-y-3"
     >
       <div>
         <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight">
           This may be a medical emergency
         </h2>
-        <p className="mt-1 text-xs sm:text-sm text-[#FBE9E7] leading-relaxed">
+        <p className="mt-1 text-xs sm:text-sm text-danger-soft leading-relaxed">
           Call the national emergency number now, or go to the nearest emergency department. Do not wait for a booking.
         </p>
       </div>
@@ -22,7 +22,7 @@ export function EmergencyBanner({ matched }: { matched: string[] }) {
       <div className="pt-1">
         <a
           href="tel:112"
-          className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-heading font-extrabold text-[#C1352B] text-base shadow-sm hover:bg-[#FBE9E7] active:scale-[0.98] transition"
+          className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3 font-heading font-extrabold text-danger text-base shadow-sm hover:bg-danger-soft active:scale-[0.98] transition"
           aria-label="Call emergency services at 112"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -32,7 +32,7 @@ export function EmergencyBanner({ matched }: { matched: string[] }) {
         </a>
       </div>
 
-      <div className="pt-2 border-t border-white/20 text-xs text-[#FBE9E7] space-y-1">
+      <div className="pt-2 border-t border-white/20 text-xs text-danger-soft space-y-1">
         <p>
           We showed this because your message {phrases.length ? <>mentioned: <span className="font-semibold text-white">{phrases.join(", ")}</span></> : "sounded like a possible emergency"}. Hospitals nearby are listed below.
         </p>

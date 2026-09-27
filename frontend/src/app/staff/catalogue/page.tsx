@@ -23,40 +23,40 @@ export default async function StaffCataloguePage() {
       <FacilityShell facilityName={facility?.name ?? "Your facility"} operatorName={actor.name} active="catalogue">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h1 className="font-heading font-bold text-xl sm:text-2xl text-[#12262B]">
+                <h1 className="font-heading font-bold text-xl sm:text-2xl text-foreground">
                   Test Catalogue &amp; Live Pricing
                 </h1>
-                <p className="text-xs text-[#4B6560] mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   These prices are what patients see in RioMed search and pay at booking.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[#0A5347] bg-[#CDE8E1] px-3 py-1 rounded-full">
+                <span className="text-xs font-semibold text-primary-strong bg-primary-muted px-3 py-1 rounded-full">
                   Demo data
                 </span>
               </div>
             </div>
 
             {/* Phones: one card per test */}
-            <ul className="lg:hidden divide-y divide-[#F0EEE7] rounded-xl border border-[#E3E0D6] bg-white shadow-2xs">
+            <ul className="lg:hidden divide-y divide-border-soft rounded-xl border border-border bg-surface shadow-2xs">
               {items.map((item) => (
                 <li key={item.code} className="p-4 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-heading font-semibold text-sm text-[#12262B]">{item.name}</p>
-                    <p className="text-xs text-[#4B6560]">
+                    <p className="font-heading font-semibold text-sm text-foreground">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       ~{item.turnaroundHours} hrs{item.fasting ? " · fasting required" : ""}
                     </p>
                   </div>
-                  <span className="font-heading font-bold text-sm text-[#0A5347] shrink-0">{formatNaira(item.priceKobo)}</span>
+                  <span className="font-heading font-bold text-sm text-primary-strong shrink-0">{formatNaira(item.priceKobo)}</span>
                 </li>
               ))}
             </ul>
 
             {/* Catalogue Table */}
-            <div className="hidden lg:block rounded-xl border border-[#E3E0D6] bg-white overflow-x-auto shadow-2xs">
+            <div className="hidden lg:block rounded-xl border border-border bg-surface overflow-x-auto shadow-2xs">
               <div className="min-w-[620px]">
-                <div className="grid grid-cols-[1.5fr_110px_90px_100px_90px] bg-[#F7F5F0] px-4 py-2.5 text-xs font-bold text-[#4B6560] uppercase tracking-wider border-b border-[#E3E0D6]">
+                <div className="grid grid-cols-[1.5fr_110px_90px_100px_90px] bg-background px-4 py-2.5 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
                   <span>Test Name</span>
                   <span>Published Price</span>
                   <span>Turnaround</span>
@@ -64,43 +64,43 @@ export default async function StaffCataloguePage() {
                   <span>Status</span>
                 </div>
 
-                <div className="divide-y divide-[#F0EEE7]">
+                <div className="divide-y divide-border-soft">
                   {items.map((item) => (
                     <div
                       key={item.code}
-                      className="grid grid-cols-[1.5fr_110px_90px_100px_90px] px-4 py-3.5 items-center text-xs hover:bg-[#F3FAF8]/40 transition"
+                      className="grid grid-cols-[1.5fr_110px_90px_100px_90px] px-4 py-3.5 items-center text-xs hover:bg-primary-soft/40 transition"
                     >
                       <div>
-                        <span className="font-heading font-semibold text-[#12262B]">
+                        <span className="font-heading font-semibold text-foreground">
                           {item.name}
                         </span>
-                        <span className="block font-mono text-xs text-[#8B9490]">
+                        <span className="block font-mono text-xs text-subtle-foreground">
                           code: {item.code}
                         </span>
                       </div>
 
-                      <div className="font-heading font-bold text-[#0A5347]">
+                      <div className="font-heading font-bold text-primary-strong">
                         {formatNaira(item.priceKobo)}
                       </div>
 
-                      <div className="text-[#4B6560]">
+                      <div className="text-muted-foreground">
                         ~{item.turnaroundHours} hrs
                       </div>
 
                       <div>
                         {item.fasting ? (
-                          <span className="bg-[#FFF4E5] text-[#8A6212] px-2 py-0.5 rounded text-xs font-semibold">
+                          <span className="bg-warning-soft text-warning-foreground px-2 py-0.5 rounded text-xs font-semibold">
                             Fasting req.
                           </span>
                         ) : (
-                          <span className="text-[#8B9490] text-xs">
+                          <span className="text-subtle-foreground text-xs">
                             None
                           </span>
                         )}
                       </div>
 
                       <div>
-                        <span className="bg-[#CDE8E1] text-[#0A5347] px-2.5 py-0.5 rounded-full text-xs font-bold">
+                        <span className="bg-primary-muted text-primary-strong px-2.5 py-0.5 rounded-full text-xs font-bold">
                           ACTIVE
                         </span>
                       </div>

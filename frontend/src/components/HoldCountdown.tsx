@@ -1,5 +1,7 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
+
 import { useEffect, useState } from "react";
 
 interface HoldCountdownProps {
@@ -31,8 +33,8 @@ export function HoldCountdown({ expiresAt, onExpire }: HoldCountdownProps) {
 
   if (remainingMs <= 0) {
     return (
-      <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-xs sm:text-sm text-[#8A6212] font-semibold flex items-center gap-2">
-        <span>⚠️ Hold expired. This slot was released.</span>
+      <div className="rounded-2xl border border-warning/30 bg-warning-soft p-4 text-xs sm:text-sm text-warning-foreground font-semibold flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4" aria-hidden /><span>Hold expired. This slot was released.</span>
       </div>
     );
   }
@@ -41,11 +43,11 @@ export function HoldCountdown({ expiresAt, onExpire }: HoldCountdownProps) {
     <div
       className={`rounded-2xl border p-4 flex items-center gap-3 transition ${
         isUrgent
-          ? "border-[#C1352B]/40 bg-[#FBE9E7] text-[#8A251C]"
-          : "border-[#0E6B5C]/30 bg-[#F3FAF8] text-[#0A5347]"
+          ? "border-danger/40 bg-danger-soft text-danger-foreground"
+          : "border-primary/30 bg-primary-soft text-primary-strong"
       }`}
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-2xs shrink-0 text-base">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface shadow-2xs shrink-0 text-base">
         ⏱
       </div>
       <div className="flex-1 min-w-0">

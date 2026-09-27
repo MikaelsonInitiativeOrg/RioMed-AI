@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ExternalLink, MapPinned } from "lucide-react";
 
 interface LivePlace {
   placeId: string;
@@ -43,32 +44,52 @@ export function LiveNearby({ address, lat, lng }: { address: string; lat?: numbe
   if (state.kind === "off") return null;
 
   return (
-    <section aria-label="Live nearby facilities" aria-busy={state.kind === "loading"} className="rounded-xl border border-sky-900/15 bg-white p-4">
-      <h2 className="font-semibold">{lat != null ? "Hospitals, clinics and health centres near you" : `More places near ${address}`}</h2>
-      <p className="text-xs text-slate-600">Live from Google Maps · not verified by RioMed · booking not available. Call ahead to check which tests they offer.</p>
-      {state.kind === "loading" && <p className="mt-3 text-sm text-slate-500 animate-pulse">Searching Google Maps…</p>}
+    <section aria-label="Live nearby facilities" aria-busy={state.kind === "loading"} className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-border-soft text-muted-foreground">
+          <MapPinned className="h-5 w-5" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-foreground">{lat != null ? "More places near you" : `More places near ${address}`}</h2>
+          <p className="text-sm text-subtle-foreground">From Google Maps · not verified by RioMed · call ahead, online booking isn&apos;t available</p>
+        </div>
+      </div>
+      {state.kind === "loading" && (
+        <ul className="mt-4 space-y-2" aria-label="Loading places">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="h-12 animate-pulse rounded-lg bg-border-soft" />
+          ))}
+        </ul>
+      )}
       {state.kind === "error" && (
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <p className="text-sm text-amber-800">{state.reason}.</p>
-          <button type="button" onClick={() => setAttempt((n) => n + 1)} className="inline-flex min-h-[44px] items-center rounded-lg border border-sky-900/20 px-3 text-sm text-sky-900 hover:bg-sky-50">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <p className="text-sm text-warning-foreground">{state.reason}.</p>
+          <button type="button" onClick={() => setAttempt((n) => n + 1)} className="inline-flex min-h-[44px] items-center rounded-lg border border-border-strong px-4 text-sm font-bold text-primary hover:bg-primary-soft">
             Try again
           </button>
         </div>
       )}
-      {state.kind === "ok" && state.places.length === 0 && <p className="mt-3 text-sm">No live results for this location.</p>}
+      {state.kind === "ok" && state.places.length === 0 && <p className="mt-4 text-sm text-muted-foreground">No live results for this location.</p>}
       {state.kind === "ok" && state.places.length > 0 && (
-        <ul className="mt-3 divide-y">
+        <ul className="mt-3 divide-y divide-border-soft">
           {state.places.map((p) => (
-            <li key={p.placeId} className="flex items-center justify-between gap-3 py-2 text-sm">
-              <span>{p.name}</span>
-              <a href={p.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-sky-900/20 px-3 text-sky-900 hover:bg-sky-50">
-                Open in Google Maps
+            <li key={p.placeId} className="flex items-center justify-between gap-3 py-2.5">
+              <span className="min-w-0 text-sm font-bold text-foreground">{p.name}</span>
+              <a
+                href={p.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open ${p.name} in Google Maps (new tab)`}
+                className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-bold text-primary transition-colors hover:bg-primary-soft"
+              >
+                Directions
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               </a>
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-2 text-xs text-slate-500">Sources: Google Maps</p>
+      <p className="mt-3 text-xs text-subtle-foreground">Sources: Google Maps</p>
     </section>
   );
 }

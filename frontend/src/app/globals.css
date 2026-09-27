@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-heading: var(--font-sora), system-ui, sans-serif;
-  --font-sans: var(--font-public-sans), system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-atkinson), system-ui, sans-serif;
+  --font-sans: var(--font-atkinson), system-ui, -apple-system, sans-serif;
+}
+
+/* RioMed design system (ui-ux-pro-max, "healthcare clinic booking trustworthy"): calm cyan + health green.
+   Components use these tokens (bg-primary, text-muted-foreground, border-border…), never raw hex. */
+@theme {
+  --color-primary: #0E7490;          /* cyan-700: 5.4:1 with white text */
+  --color-primary-strong: #155E75;   /* headings, hover */
+  --color-primary-soft: #ECFEFF;
+  --color-primary-muted: #CFFAFE;
+  --color-accent: #059669;           /* health green: confirmations, success */
+  --color-accent-soft: #ECFDF5;
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-foreground: #0F172A;
+  --color-muted-foreground: #475569;
+  --color-subtle-foreground: #64748B;
+  --color-border: #E2E8F0;
+  --color-border-soft: #F1F5F9;
+  --color-border-strong: #CBD5E1;
+  --color-warning: #D97706;
+  --color-warning-soft: #FFFBEB;
+  --color-warning-foreground: #92400E;
+  --color-danger: #DC2626;
+  --color-danger-soft: #FEF2F2;
+  --color-danger-foreground: #991B1B;
 }
 
 :root {
-  --teal-700: #0A5347;
-  --teal-600: #0E6B5C;
-  --teal-100: #CDE8E1;
-  --teal-50: #F3FAF8;
-  --mint: #8FE0CE;
-  --ink-900: #12262B;
-  --ink-600: #4B6560;
-  --border: #E3E0D6;
-  --border-light: #F0EEE7;
-  --bg: #F7F5F0;
-  --accent: #D96B33;
-  --danger: #C1352B;
-  --danger-100: #FBE9E7;
-  --warning: #C98A1D;
-  --warning-100: #FFF4E5;
+  --bg: #F8FAFC;
+  --ink-900: #0F172A;
+  --focus: #0E7490;
 }
 
 html {
@@ -34,13 +47,13 @@ body {
   background-color: var(--bg);
   color: var(--ink-900);
   min-height: 100vh;
-  font-family: var(--font-public-sans), system-ui, sans-serif;
+  font-family: var(--font-atkinson), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, .font-heading {
-  font-family: var(--font-sora), system-ui, sans-serif;
+  font-family: var(--font-atkinson), system-ui, sans-serif;
 }
 
 /* Ensure mobile form inputs never trigger unwanted zoom on iOS/Android */
@@ -55,7 +68,7 @@ input, select, textarea {
 
 /* Accessible focus outlines matching design system */
 :focus-visible {
-  outline: 2px solid var(--teal-600);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -73,3 +86,8 @@ input, select, textarea {
   align-items: center;
   justify-content: center;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+button:not(:disabled), [role="button"], summary, label[for], a { cursor: pointer; }

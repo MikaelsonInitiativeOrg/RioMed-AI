@@ -23,7 +23,7 @@ export function StaffResultUploader({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center rounded-md border-[1.5px] border-[#0E6B5C] bg-white px-3 py-1.5 text-sm font-heading font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] active:scale-[0.98] transition shadow-2xs"
+        className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center rounded-md border-[1.5px] border-primary bg-surface px-3 py-1.5 text-sm font-heading font-bold text-primary hover:bg-primary-soft active:scale-[0.98] transition shadow-2xs"
       >
         {resultCount > 0 ? "Upload update (v2)" : "Upload result"}
       </button>
@@ -34,28 +34,28 @@ export function StaffResultUploader({
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
         >
-          <div className="relative w-full max-w-md rounded-2xl border border-[#E3E0D6] bg-white p-6 shadow-xl text-left">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl text-left">
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 text-[#4B6560] hover:text-[#12262B] p-1 rounded-lg text-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-lg text-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Close modal"
             >
               ✕
             </button>
 
-            <h3 className="font-heading font-bold text-lg text-[#0A5347] mb-1">
+            <h3 className="font-heading font-bold text-lg text-primary-strong mb-1">
               Upload Official Result PDF
             </h3>
-            <p className="text-xs text-[#4B6560] mb-4">
-              Booking Ref: <strong className="font-mono text-[#12262B]">{reference}</strong> · Test: {testName}
+            <p className="text-xs text-muted-foreground mb-4">
+              Booking Ref: <strong className="font-mono text-foreground">{reference}</strong> · Test: {testName}
             </p>
 
             <form action={uploadResultAction} className="space-y-4">
               <input type="hidden" name="appointmentId" value={appointmentId} />
 
-              <div className="rounded-xl border border-dashed border-[#0E6B5C]/40 bg-[#F3FAF8] p-4 text-center">
-                <label className="block text-xs font-semibold text-[#0A5347] mb-2 cursor-pointer">
+              <div className="rounded-xl border border-dashed border-primary/40 bg-primary-soft p-4 text-center">
+                <label className="block text-xs font-semibold text-primary-strong mb-2 cursor-pointer">
                   Select official PDF document:
                 </label>
                 <input
@@ -63,9 +63,9 @@ export function StaffResultUploader({
                   name="file"
                   accept="application/pdf"
                   required
-                  className="w-full text-xs text-[#4B6560] file:mr-2 file:min-h-[44px] file:rounded-lg file:border-0 file:bg-[#0E6B5C] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-[#0A5347] cursor-pointer"
+                  className="w-full text-xs text-muted-foreground file:mr-2 file:min-h-[44px] file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-primary-strong cursor-pointer"
                 />
-                <p className="mt-2 text-xs text-[#8B9490]">
+                <p className="mt-2 text-xs text-subtle-foreground">
                   Accepts PDF up to 10 MB. Link expires in 5 min for security.
                 </p>
               </div>
@@ -74,13 +74,13 @@ export function StaffResultUploader({
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-lg border border-[#E3E0D6] px-4 py-2 text-xs font-semibold text-[#4B6560] hover:bg-[#F7F5F0]"
+                  className="rounded-lg border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-background"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-[#0E6B5C] px-4 py-2 text-xs font-heading font-bold text-white shadow-xs hover:bg-[#0A5347]"
+                  className="rounded-lg bg-primary px-4 py-2 text-xs font-heading font-bold text-white shadow-xs hover:bg-primary-strong"
                 >
                   Upload &amp; Notify Patient
                 </button>

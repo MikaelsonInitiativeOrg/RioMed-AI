@@ -15,7 +15,7 @@ export default async function PrivacyPage() {
       <div>
         <Link
           href="/dashboard"
-          className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-[#0E6B5C] hover:text-[#0A5347] transition"
+          className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-strong transition"
         >
           ← Back to Dashboard
         </Link>
@@ -23,10 +23,10 @@ export default async function PrivacyPage() {
 
       {/* Header */}
       <div>
-        <h1 className="font-heading text-xl sm:text-2xl font-bold text-[#0A5347]">
+        <h1 className="font-heading text-xl sm:text-2xl font-bold text-primary-strong">
           Privacy &amp; your data
         </h1>
-        <p className="mt-1 text-xs sm:text-sm text-[#4B6560]">
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
           Download a copy of your data. More controls are coming as RioMed works toward the Nigeria Data Protection Act (NDPA) requirements.
         </p>
       </div>

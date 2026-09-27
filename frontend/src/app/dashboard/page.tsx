@@ -17,23 +17,23 @@ export default async function Dashboard() {
       {/* Dashboard Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[#0A5347]">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-primary-strong">
             My dashboard
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-[#4B6560]">
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
             Appointments, results and booking history in one place.
           </p>
         </div>
 
         <div className="text-right shrink-0">
-          <span className="text-xs text-[#8B9490]">Signed in as</span>
-          <p className="font-heading font-bold text-xs text-[#12262B]">
+          <span className="text-xs text-subtle-foreground">Signed in as</span>
+          <p className="font-heading font-bold text-xs text-foreground">
             {actor.name}
           </p>
           <form action={signOutAction}>
             <button
               type="submit"
-              className="text-xs text-[#0E6B5C] hover:underline"
+              className="text-xs text-primary hover:underline"
             >
               Sign out
             </button>

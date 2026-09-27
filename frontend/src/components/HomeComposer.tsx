@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { detectAccountIntent, looksLikeCredential } from "@riomed/backend/core/intent/account";
 import { Search } from "lucide-react";
-import { BorderBeam } from "@/components/ui/border-beam-search";
 
 interface HomeComposerProps {
   initialQuery?: string;
@@ -39,10 +38,12 @@ export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeCompo
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative flex items-center gap-2 rounded-2xl border-[1.5px] border-[#E3E0D6] bg-[#F7F5F0] p-1.5 pl-4 shadow-2xs focus-within:border-[#0E6B5C] focus-within:bg-white transition"
+      role="search"
+      className="flex items-center gap-2 rounded-xl border border-border-strong bg-surface p-1.5 pl-4 shadow-sm transition-shadow duration-150 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/15"
     >
+      <Search className="h-5 w-5 shrink-0 text-subtle-foreground" aria-hidden />
       <label htmlFor="composer-input" className="sr-only">
-        Describe what you need — a test, a symptom, an area...
+        Describe what you need: a test, a place, or &quot;create account&quot;
       </label>
       <input
         id="composer-input"
@@ -51,26 +52,15 @@ export function HomeComposer({ initialQuery = "", autoFocus = false }: HomeCompo
         onChange={(e) => setQuery(e.target.value)}
         maxLength={1000}
         autoFocus={autoFocus}
-        placeholder="Describe what you need — a test, or prompt 'create account' or 'access dashboard'..."
-        className="flex-1 bg-transparent border-none outline-none text-[#12262B] text-sm sm:text-base placeholder:text-[#4B6560]/60 min-h-[44px]"
+        placeholder="e.g. malaria test near Ikeja tomorrow"
+        className="min-h-[44px] min-w-0 flex-1 border-none bg-transparent text-base text-foreground outline-none placeholder:text-subtle-foreground"
       />
-      <BorderBeam
-        size="line"
-        colorVariant="colorful"
-        duration={3.1}
-        borderRadius={14}
-        theme="dark"
-        className="shrink-0 rounded-xl overflow-hidden"
+      <button
+        type="submit"
+        className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-white transition-colors duration-150 hover:bg-primary-strong"
       >
-        <button
-          type="submit"
-          aria-label="Search"
-          className="min-h-[44px] h-11 px-4 sm:px-5 rounded-xl bg-[#0E6B5C] text-white flex items-center justify-center gap-2 hover:bg-[#0A5347] active:scale-[0.98] transition font-semibold text-sm shadow-xs cursor-pointer"
-        >
-          <Search className="w-4 h-4 shrink-0 text-white" strokeWidth={2.4} aria-hidden="true" />
-          <span>Search</span>
-        </button>
-      </BorderBeam>
+        Search
+      </button>
     </form>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertTriangle, CalendarCheck, ChevronDown, FileLock2, Info, LocateFixed, Search, Sparkles, Stethoscope } from "lucide-react";
 import { getTest, isKnownTestCode } from "@riomed/backend/core/catalog";
 import { DAY_PARTS, type DayPart, type SearchIntent } from "@riomed/backend/core/intent";
 import { EmergencyBanner } from "@/components/EmergencyBanner";
@@ -7,7 +8,6 @@ import { FacilityCard } from "@/components/FacilityCard";
 import { LiveNearby } from "@/components/LiveNearby";
 import { NearMeButton } from "@/components/NearMeButton";
 import { PromptBookCard } from "@/components/PromptBookCard";
-import { RioMedLogo } from "@/components/Logo";
 import { redirect } from "next/navigation";
 import { detectAccountIntent, looksLikeCredential, wantsNearMe } from "@riomed/backend/core/intent/account";
 import { HomeComposer } from "@/components/HomeComposer";
@@ -60,256 +60,226 @@ export default async function Home(props: PageProps<"/">) {
     view = { intent, ...(await searchWithIntent(intent)) };
   }
 
-  return (
-    <div className="flex-1 flex flex-col justify-between min-h-[calc(100vh-100px)] py-4 sm:py-6 px-3 sm:px-6">
-      {/* ================= CHAT / CONTENT AREA ================= */}
-      <div className="flex-1 flex flex-col justify-center">
-        {/* State 1: Empty Home State matching uploaded screenshot exactly */}
-        {!view && !error && (
-          <div className="my-auto py-8 sm:py-12 flex flex-col items-center justify-center text-center gap-5">
-            {/* Center Logo Mark (width 56, height 56) */}
-            <RioMedLogo size={56} />
+  const aiBadge = view?.ai && (
+    <span className="inline-flex items-center gap-1.5 text-xs text-subtle-foreground">
+      {view.ai.source === "llm" && (
+        <>
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 font-bold text-accent">
+            <Sparkles className="h-3 w-3" aria-hidden /> Understood by {view.ai.mode}
+          </span>
+          {view.ai.latencyMs} ms
+        </>
+      )}
+      {view.ai.source === "mock" && <span className="rounded-full bg-warning-soft px-2 py-0.5 font-bold text-warning-foreground">Mock AI</span>}
+      {view.ai.source === "fallback" && (
+        <span className="rounded-full bg-warning-soft px-2 py-0.5 font-bold text-warning-foreground" title={`AI unavailable (${view.ai.fallbackReason}); the rule-based parser was used`}>
+          Offline parser ({view.ai.fallbackReason})
+        </span>
+      )}
+    </span>
+  );
 
-            {/* Main Heading in Sora */}
-            <h1 className="font-heading font-bold text-2xl sm:text-3xl md:text-[28px] text-[#0A5347] tracking-tight">
+  return (
+    <div className="flex flex-1 flex-col py-6 sm:py-10">
+      {/* ================= HOME ================= */}
+      {!view && !error && (
+        <div className="flex flex-col gap-10">
+          <section className="mx-auto w-full max-w-2xl text-center">
+            <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-muted-foreground">
+              <Stethoscope className="h-3.5 w-3.5 text-primary" aria-hidden />
+              Find, book and pay for medical tests
+            </p>
+            <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
               What do you need to find today?
             </h1>
-
-            {/* Subheading */}
-            <p className="max-w-[460px] text-sm sm:text-[15px] text-[#4B6560] leading-relaxed -mt-1">
-              Describe the test or care you&apos;re looking for, in plain language. RioMed helps you find, book and pay — it never diagnoses.
+            <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-muted-foreground">
+              Describe the test or care you need in plain words. RioMed finds nearby clinics with open slots. It never diagnoses.
             </p>
-
-            {/* Primary Search Input with Animated Search Button */}
-            <div className="w-full max-w-xl mx-auto my-1">
+            <div className="mt-6 text-left">
               <HomeComposer initialQuery={q} />
             </div>
-
-            {/* Closest facilities: the browser asks for location on load; nearest first */}
-            <section aria-label="Closest to you" className="w-full max-w-xl mx-auto rounded-2xl border border-[#E3E0D6] bg-white p-4 text-left">
-              <h2 className="font-heading font-bold text-sm text-[#0A5347]">Hospitals, clinics and health centres closest to you</h2>
-              <p className="mt-1 mb-3 text-xs text-[#4B6560]">Allow location and RioMed shows the nearest ones first, anywhere you are.</p>
-              <NearMeButton query="" />
-            </section>
-
-            {/* Suggestion Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg mt-1">
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((s) => (
                 <Link
                   key={s.label}
                   href={`/?q=${encodeURIComponent(s.text)}`}
-                  className="inline-flex min-h-[44px] items-center rounded-full bg-[#F3FAF8] border border-[#CDE8E1] px-4 py-2 text-xs sm:text-[13px] font-semibold text-[#0A5347] transition hover:bg-[#CDE8E1]/60 shadow-2xs"
+                  className="inline-flex min-h-[40px] items-center rounded-full border border-border bg-surface px-4 text-sm text-muted-foreground transition-colors duration-150 hover:border-primary hover:text-primary"
                 >
                   {s.label}
                 </Link>
               ))}
             </div>
+          </section>
 
-            {/* Structured Search Accordion Option */}
-            <div className="mt-4 w-full max-w-xl text-left">
-              <details className="group rounded-2xl border border-[#E3E0D6] bg-white p-3.5 shadow-2xs transition">
-                <summary className="text-xs font-semibold text-[#0E6B5C] cursor-pointer flex items-center justify-between">
-                  <span>Prefer not to type? Search with the form</span>
-                  <span className="text-xs group-open:rotate-180 transition-transform">▼</span>
-                </summary>
-                <div className="mt-3 pt-3 border-t border-[#F0EEE7]">
-                  <SearchRefine title="Filter by test, area & time" />
+          {/* Closest facilities: the browser asks for location on load; nearest first */}
+          <section aria-labelledby="near-title" className="mx-auto w-full max-w-2xl rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                <LocateFixed className="h-5 w-5" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="near-title" className="text-base font-bold text-foreground">Closest to you</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">Hospitals, clinics and health centres near you, nearest first, anywhere you are.</p>
+                <div className="mt-3">
+                  <NearMeButton query="" />
                 </div>
-              </details>
+              </div>
             </div>
-          </div>
-        )}
+          </section>
 
-        {/* State 2: Account Creation or Dashboard Access Flow via Prompt */}
-        {/* State 3: Error query */}
-        {error && (
-          <div className="my-auto max-w-xl mx-auto w-full p-4 rounded-2xl border border-[#FBE9E7] bg-[#FBE9E7] text-sm text-[#8A251C]">
-            <p className="font-semibold">{error}</p>
-          </div>
-        )}
-
-        {/* State 4: Active Prompt Search / Results Conversation */}
-        {view && (
-          <div className="w-full max-w-3xl mx-auto space-y-6 pb-6 animate-in fade-in duration-300">
-            {/* User message bubble */}
-            {(q || area) && (
-              <div className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl rounded-br-xs bg-[#0E6B5C] px-4 py-3 text-sm text-white shadow-xs">
-                  {q || `Search for ${view.intent.tests[0] ?? "tests"} in ${area}`}
+          <section aria-label="How RioMed works" className="grid gap-3 sm:grid-cols-3">
+            {[
+              [Search, "Describe it", "Type what you need, like “malaria test in Ikeja tomorrow”. The AI reads it; it never diagnoses."],
+              [CalendarCheck, "Book a slot", "See nearby clinics, prices and open times. Hold a slot and pay securely with Paystack."],
+              [FileLock2, "Keep your results", "Results go to one private account, so your history follows you if you move."],
+            ].map(([Icon, title, text]) => {
+              const I = Icon as typeof Search;
+              return (
+                <div key={title as string} className="rounded-xl border border-border bg-surface p-5">
+                  <I className="h-5 w-5 text-primary" aria-hidden />
+                  <h3 className="mt-3 text-base font-bold text-foreground">{title as string}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text as string}</p>
                 </div>
+              );
+            })}
+          </section>
+
+          <details className="group mx-auto w-full max-w-2xl rounded-xl border border-border bg-surface">
+            <summary className="flex min-h-[52px] list-none items-center justify-between gap-2 px-5 text-sm font-bold text-foreground [&::-webkit-details-marker]:hidden">
+              Prefer a form? Search by test, area and time
+              <ChevronDown className="h-4 w-4 text-subtle-foreground transition-transform group-open:rotate-180" aria-hidden />
+            </summary>
+            <div className="border-t border-border-soft p-5">
+              <SearchRefine />
+            </div>
+          </details>
+        </div>
+      )}
+
+      {error && (
+        <div role="alert" className="mx-auto w-full max-w-2xl rounded-xl border border-danger/30 bg-danger-soft p-4 text-sm font-bold text-danger-foreground">
+          {error}
+        </div>
+      )}
+
+      {/* ================= RESULTS ================= */}
+      {view && (
+        <div className="mx-auto w-full max-w-3xl space-y-5">
+          <div className="space-y-3">
+            <HomeComposer initialQuery={q || ""} />
+            {!view.emergency?.isEmergency && (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-muted-foreground">
+                  {q ? <>Results for <span className="font-bold text-foreground">“{q}”</span></> : <>Search in <span className="font-bold text-foreground">{area}</span></>}
+                </p>
+                {aiBadge}
               </div>
             )}
-
-            {/* Assistant message response */}
-            <div className="flex items-start gap-3">
-              <div className="mt-1 shrink-0">
-                <RioMedLogo size={28} />
-              </div>
-
-              <div className="flex-1 min-w-0 space-y-4">
-                {/* AI-020: Emergency banner MUST come first before all results */}
-                {view.emergency?.isEmergency && (
-                  <EmergencyBanner matched={view.emergency.matched} />
-                )}
-
-                {/* Normal assistant introductory bubble */}
-                {!view.emergency?.isEmergency && (
-                  <div className="rounded-2xl rounded-bl-xs border border-[#E3E0D6] bg-white p-4 text-sm text-[#12262B] shadow-2xs space-y-2">
-                    <p>
-                      Here&apos;s what I understood. Tap a chip to change it, or check nearby facilities below.
-                    </p>
-
-                    {/* AI latency & mode badge */}
-                    {view.ai && (
-                      <div className="pt-2 border-t border-[#F0EEE7] flex flex-wrap items-center gap-2 text-xs text-[#4B6560]">
-                        {view.ai.source === "mock" && (
-                          <span className="rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-xs font-bold text-[#8A6212]">
-                            MOCK AI
-                          </span>
-                        )}
-                        {view.ai.source === "llm" && (
-                          <span className="rounded-full bg-[#CDE8E1] px-2 py-0.5 text-xs font-bold text-[#0A5347]">
-                            LIVE · {view.ai.mode.toUpperCase()}
-                          </span>
-                        )}
-                        {view.ai.source === "fallback" && (
-                          <span className="rounded-full bg-[#FFF4E5] px-2 py-0.5 text-xs font-bold text-[#8A6212]">
-                            FALLBACK
-                          </span>
-                        )}
-                        <span>
-                          {view.ai.source === "llm" && (
-                            <>Understood in {view.ai.latencyMs} ms.</>
-                          )}
-                          {view.ai.source === "mock" && (
-                            <>Mock mode: understood by rule-based parser.</>
-                          )}
-                          {view.ai.source === "fallback" && (
-                            <>AI unavailable ({view.ai.fallbackReason}), rule-based parser used.</>
-                          )}
-                          {typeof view.totalMs === "number" && (
-                            <> (Search: {view.totalMs} ms)</>
-                          )}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Editable intent chips & parameter refine */}
-                <SearchRefine
-                  test={view.intent.tests[0]}
-                  area={view.place?.name ?? null}
-                  day={view.intent.when?.day ?? null}
-                  part={view.intent.when && view.intent.when.part !== "any" ? view.intent.when.part : null}
-                />
-
-                {view.intent.tests.length > 1 && (
-                  <div className="rounded-xl bg-[#F3FAF8] border border-[#0E6B5C]/20 p-3 text-xs text-[#0A5347]">
-                    <span className="font-bold">Tests requested:</span>{" "}
-                    {view.intent.tests.map((t) => getTest(t)?.name ?? t).join(", ")}. The form above edits the first one.
-                  </div>
-                )}
-
-                {/* Clarification notes */}
-                {view.intent.intent === "unsupported" && !view.place && !wantsNearMe(q) && (
-                  <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
-                    <p className="font-bold">Request clarification</p>
-                    <p className="mt-1">
-                      I couldn&apos;t tell which test or area you mean. Pick them above. RioMed can&apos;t answer medical questions or suggest a diagnosis. Please talk to a clinician for that.
-                    </p>
-                  </div>
-                )}
-
-                {view.intent.tests.length === 0 && view.intent.intent !== "unsupported" && view.intent.intent !== "emergency" && view.place && (
-                  <div className="rounded-2xl border border-[#E3E0D6] bg-white p-4 text-sm text-[#12262B]">
-                    <p className="font-bold text-[#0A5347]">General facility search</p>
-                    <p className="mt-1 text-[#4B6560]">
-                      No specific test named. RioMed doesn&apos;t choose tests from symptoms. A clinic can advise you. Here are facilities near {view.place.name}.
-                    </p>
-                  </div>
-                )}
-
-                {!view.place && !view.intent.locationQuery && view.intent.intent !== "emergency" && (view.intent.intent !== "unsupported" || wantsNearMe(q)) && (
-                  <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
-                    <p className="font-bold">Where are you?</p>
-                    <p className="mt-1 mb-3">
-                      Allow location to see hospitals, clinics and health centres near you, or choose an area above.
-                    </p>
-                    <NearMeButton query={q} />
-                  </div>
-                )}
-                {!view.place && view.intent.locationQuery && (
-                  <p className="rounded-2xl border border-[#E3E0D6] bg-white p-4 text-sm text-[#4B6560]">
-                    RioMed has no partner facilities in {view.intent.locationQuery} yet, so booking isn&apos;t available there. Here are places from Google Maps you can contact.
-                  </p>
-                )}
-
-                {/* Book-for-me from a prompt that names a clinic (hold; pay on the appointment page) */}
-                {q && !view.emergency?.isEmergency && <PromptBookCard query={q} />}
-
-                {/* Facilities List */}
-                {view.place && (
-                  <section aria-label="Results" className="space-y-3 pt-2">
-                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                      <h2 className="font-heading text-lg font-bold text-[#0A5347] sm:text-xl">
-                        Facilities near {view.place.name}
-                      </h2>
-                      {view.widened && (
-                        <span className="text-xs font-semibold text-[#8A6212] bg-[#FFF4E5] px-2.5 py-0.5 rounded-full border border-[#C98A1D]/30">
-                          Few results nearby, search widened to {view.radiusKm} km
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-[#8B9490]">
-                      Ranked by distance, test availability and partner status
-                    </p>
-
-                    {view.results.length === 0 ? (
-                      <p className="rounded-2xl border border-[#E3E0D6] bg-white p-4 text-sm text-[#4B6560]">
-                        {view.place.name === "your location"
-                          ? "No RioMed partner near you yet, so online booking isn't available here. The nearest places from Google Maps are below."
-                          : `No RioMed partner near ${view.place.name} yet, so online booking isn't available there. Places from Google Maps are below.`}{" "}
-                        Clinics can <Link href="/account?mode=signup&type=facility" className="font-semibold text-[#0E6B5C] underline">register on RioMed</Link> to take bookings.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {view.results.map((r) => (
-                          <FacilityCard
-                            key={r.id}
-                            facility={r}
-                            testCode={view!.intent.tests[0]}
-                            window={view!.window}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                )}
-
-                {/* FR-027: live nearby places from Google Maps (unverified, not bookable) */}
-                {!view.emergency?.isEmergency && (view.intent.locationQuery || view.place) && (
-                  <LiveNearby
-                    address={view.intent.locationQuery ?? (deviceOrigin && view.place?.name === "your location" ? "" : view.place?.name ?? "")}
-                    lat={deviceOrigin && !view.intent.locationQuery ? deviceOrigin.lat : undefined}
-                    lng={deviceOrigin && !view.intent.locationQuery ? deviceOrigin.lng : undefined}
-                  />
-                )}
-              </div>
-            </div>
           </div>
-        )}
+
+          {/* AI-020: emergency guidance comes first, before any results */}
+          {view.emergency?.isEmergency && <EmergencyBanner matched={view.emergency.matched} />}
+
+          {/* FR-015: what was understood, editable */}
+          <SearchRefine
+            compact
+            test={view.intent.tests[0]}
+            area={view.place?.name ?? view.intent.locationQuery ?? null}
+            day={view.intent.when?.day ?? null}
+            part={view.intent.when && view.intent.when.part !== "any" ? view.intent.when.part : null}
+          />
+
+          {view.intent.tests.length > 1 && (
+            <Note>
+              <span className="font-bold">Tests requested:</span> {view.intent.tests.map((t) => getTest(t)?.name ?? t).join(", ")}. Editing changes the first one.
+            </Note>
+          )}
+
+          {view.intent.intent === "unsupported" && !view.place && !wantsNearMe(q) && (
+            <Note tone="warning" title="Tell me the test or the area">
+              I couldn&apos;t tell which test or area you mean. Use Edit above, or try “FBC test in Yaba”. RioMed can&apos;t answer medical questions or suggest a diagnosis; please talk to a clinician for that.
+            </Note>
+          )}
+
+          {view.intent.tests.length === 0 && view.intent.intent !== "unsupported" && view.intent.intent !== "emergency" && view.place && (
+            <Note>
+              No specific test named, so these are all facilities near {view.place.name === "your location" ? "you" : view.place.name}. RioMed doesn&apos;t choose tests from symptoms; a clinic can advise you.
+            </Note>
+          )}
+
+          {!view.place && !view.intent.locationQuery && view.intent.intent !== "emergency" && (view.intent.intent !== "unsupported" || wantsNearMe(q)) && (
+            <Note tone="warning" title="Where are you?">
+              <span className="mb-3 block">Allow location to see hospitals, clinics and health centres near you, or add an area with Edit above.</span>
+              <NearMeButton query={q} />
+            </Note>
+          )}
+          {!view.place && view.intent.locationQuery && (
+            <Note>
+              RioMed has no partner facilities in {view.intent.locationQuery} yet, so booking isn&apos;t available there. Places from Google Maps are below.
+            </Note>
+          )}
+
+          {/* Book-for-me from a prompt that names a clinic (hold; pay on the appointment page) */}
+          {q && !view.emergency?.isEmergency && <PromptBookCard query={q} />}
+
+          {view.place && (
+            <section aria-labelledby="results-title" className="space-y-3">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <h2 id="results-title" className="text-xl font-bold text-foreground">
+                    Book on RioMed near {view.place.name === "your location" ? "you" : view.place.name}
+                  </h2>
+                  <p className="text-sm text-subtle-foreground">Nearest first, with test availability and open slots</p>
+                </div>
+                {view.widened && (
+                  <span className="rounded-full bg-warning-soft px-2.5 py-1 text-xs font-bold text-warning-foreground">Widened to {view.radiusKm} km</span>
+                )}
+              </div>
+
+              {view.results.length === 0 ? (
+                <Note>
+                  {view.place.name === "your location"
+                    ? "No RioMed partner near you yet, so online booking isn't available here. The nearest places from Google Maps are below."
+                    : `No RioMed partner near ${view.place.name} yet, so online booking isn't available there. Places from Google Maps are below.`}{" "}
+                  Clinics can <Link href="/account?mode=signup&type=facility" className="font-bold text-primary underline underline-offset-2">register on RioMed</Link> to take bookings.
+                </Note>
+              ) : (
+                <div className="space-y-3">
+                  {view.results.map((r) => (
+                    <FacilityCard key={r.id} facility={r} testCode={view!.intent.tests[0]} window={view!.window} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* FR-027: live nearby places from Google Maps (unverified, not bookable) */}
+          {!view.emergency?.isEmergency && (view.intent.locationQuery || view.place) && (
+            <LiveNearby
+              address={view.intent.locationQuery ?? (deviceOrigin && view.place?.name === "your location" ? "" : view.place?.name ?? "")}
+              lat={deviceOrigin && !view.intent.locationQuery ? deviceOrigin.lat : undefined}
+              lng={deviceOrigin && !view.intent.locationQuery ? deviceOrigin.lng : undefined}
+            />
+          )}
+
+          <p className="pt-2 text-center text-xs text-subtle-foreground sm:hidden">
+            RioMed helps you find and book care. It does not give medical advice. Emergency: call 112.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Note({ children, title, tone = "info" }: { children: React.ReactNode; title?: string; tone?: "info" | "warning" }) {
+  const Icon = tone === "warning" ? AlertTriangle : Info;
+  return (
+    <div className={`flex gap-3 rounded-xl border p-4 text-sm ${tone === "warning" ? "border-warning/30 bg-warning-soft text-warning-foreground" : "border-border bg-surface text-muted-foreground"}`}>
+      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${tone === "warning" ? "" : "text-primary"}`} aria-hidden />
+      <div className="min-w-0">
+        {title && <p className="mb-0.5 font-bold text-foreground">{title}</p>}
+        {children}
       </div>
-
-      {/* ================= COMPOSER (STICKY AT BOTTOM) ================= */}
-      <footer className="w-full max-w-3xl mx-auto pt-4 shrink-0">
-        {view && <HomeComposer initialQuery={q} />}
-
-        {/* Required Medical Disclaimer from screenshot & PRD AI-022 */}
-        <p className="text-center text-xs sm:text-xs text-[#4B6560] mt-2 mb-1">
-          RioMed helps you find and book care. It does not give medical advice.
-        </p>
-      </footer>
     </div>
   );
 }

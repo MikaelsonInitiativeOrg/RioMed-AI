@@ -1,27 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { Sora, Public_Sans } from "next/font/google";
+import { Atkinson_Hyperlegible } from "next/font/google";
 import { getSessionUser } from "@/lib/session";
 import { RioMedLogo } from "@/components/Logo";
+import { BadgeCheck, Building2, CalendarCheck, FlaskConical, Info, Search, Settings, ShieldCheck, Tags, UserRound } from "lucide-react";
 import "./globals.css";
 
-const sora = Sora({
-  variable: "--font-sora",
+// Atkinson Hyperlegible: designed for low-vision readability (ui-ux-pro-max healthcare pick).
+const atkinson = Atkinson_Hyperlegible({
+  variable: "--font-atkinson",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-});
-
-const publicSans = Public_Sans({
-  variable: "--font-public-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "700"],
 });
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0A5347",
+  themeColor: "#0E7490",
 };
 
 export const metadata: Metadata = {
@@ -34,114 +30,89 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const mode = (process.env.AI_PROVIDER ?? "mock").toLowerCase();
   const displayName = user ? user.name.split(" (")[0].split(",")[0] : null;
 
+  const signedInAs = user?.role === "patient" ? "patient" : user?.role === "facility_staff" || user?.role === "facility_admin" ? "facility" : user?.role === "operator" ? "operator" : null;
+  const tabs: Array<[string, React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>, string]> =
+    signedInAs === "patient"
+      ? [["/", Search, "Search"], ["/dashboard", CalendarCheck, "Bookings"], ["/audit", ShieldCheck, "Access log"], ["/privacy", Settings, "Privacy"]]
+      : signedInAs === "facility"
+        ? [["/", Search, "Search"], ["/staff", Building2, "Desk"], ["/staff/catalogue", Tags, "Catalogue"]]
+        : signedInAs === "operator"
+          ? [["/", Search, "Search"], ["/operator", BadgeCheck, "Approvals"]]
+          : [["/", Search, "Search"], ["/account?mode=access", UserRound, "Sign in"], ["/about", Info, "How it works"]];
+  const navLink = "min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-border-soft hover:text-foreground";
+
   return (
-    <html lang="en" className={`${sora.variable} ${publicSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans bg-[#F7F5F0] text-[#12262B]">
-        {/* Required Hackathon Demo Banner */}
-        <aside
-          aria-label="Demo environment status"
-          className="bg-[#FFF4E5] border-b border-[#E3E0D6] text-[#8A6212] text-xs text-center px-3 py-1 font-medium"
-        >
-          <div className="mx-auto max-w-4xl flex items-center justify-center gap-1.5 flex-wrap">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#C98A1D]" aria-hidden="true" />
-            <span>Hackathon demo · Paystack test mode · AI mode:</span>
-            <strong className="font-semibold uppercase">
-              {mode === "mock" ? "MOCK" : mode}
-            </strong>
+    <html lang="en" className={`${atkinson.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2 focus:shadow">
+          Skip to content
+        </a>
+
+        {/* Required hackathon disclosure: demo data, Paystack test mode, AI mode */}
+        <aside aria-label="Demo environment status" className="border-b border-border bg-surface text-xs text-muted-foreground">
+          <div className="mx-auto flex max-w-5xl items-center justify-center gap-2 px-4 py-1.5">
+            <span className="inline-flex items-center gap-1.5 font-medium text-warning-foreground">
+              <FlaskConical className="h-3.5 w-3.5" aria-hidden />
+              Demo
+            </span>
+            <span aria-hidden>·</span>
+            <span><span className="sm:hidden">Test payments</span><span className="hidden sm:inline">Paystack test mode</span></span>
+            <span aria-hidden>·</span>
+            <span>
+              AI: <strong className="font-bold text-foreground">{mode === "mock" ? "mock" : mode}</strong>
+            </span>
           </div>
         </aside>
 
-        {/* Official Medical Chat Topbar */}
-        <header className="sticky top-0 z-30 bg-white border-b border-[#E3E0D6] flex-shrink-0">
-          <div className="mx-auto max-w-4xl px-3 sm:px-6">
-            <div className="flex h-14 items-center justify-between gap-2">
-              {/* Brand Logo & Wordmark */}
+        <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
+          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4 sm:px-6">
+            <Link href="/" aria-label="RioMed AI home" className="flex min-h-[44px] items-center gap-2.5 rounded-lg">
+              <RioMedLogo size={30} />
+              <span className="text-lg font-bold tracking-tight text-foreground">
+                RioMed <span className="text-primary">AI</span>
+              </span>
+            </Link>
+
+            <nav aria-label="Main navigation" className="flex items-center gap-1">
+              {signedInAs === "patient" && <Link href="/dashboard" className={`hidden sm:inline-flex ${navLink}`}>My bookings</Link>}
+              {signedInAs === "facility" && <Link href="/staff" className={`hidden sm:inline-flex ${navLink}`}>Facility desk</Link>}
+              {signedInAs === "operator" && <Link href="/operator" className={`hidden sm:inline-flex ${navLink}`}>Approvals</Link>}
+              <Link href="/about" className={`hidden sm:inline-flex ${navLink}`}>How it works</Link>
+              {!user && (
+                <Link href="/account?mode=signup&type=facility" className={`hidden md:inline-flex ${navLink}`}>For clinics</Link>
+              )}
               <Link
-                href="/"
-                className="flex items-center gap-2 font-heading font-bold text-sm sm:text-base text-[#0A5347] tracking-tight min-h-[44px] pr-1 rounded-lg focus-visible:ring-2 focus-visible:ring-[#0E6B5C] shrink-0"
-                aria-label="RioMed AI Home"
+                href="/account?mode=access"
+                title={displayName ?? "Sign in or create an account"}
+                className="ml-1 inline-flex min-h-[44px] max-w-[160px] items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors duration-150 hover:bg-primary-strong"
               >
-                <RioMedLogo size={26} />
-                <span>
-                  RioMed <span className="text-[#0E6B5C]">AI</span>
-                </span>
+                <UserRound className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate">{displayName ?? "Sign in"}</span>
               </Link>
-
-              {/* Right Navigation & Status Pill */}
-              <div className="flex items-center gap-1.5 sm:gap-3 text-xs sm:text-sm">
-                <nav aria-label="Main Navigation" className="flex items-center gap-1 sm:gap-2">
-                  {user?.role === "patient" && (
-                    <Link
-                      href="/dashboard"
-                      className="inline-flex min-h-[44px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
-                    >
-                      <span className="sm:hidden">Bookings</span>
-                      <span className="hidden sm:inline">My bookings</span>
-                    </Link>
-                  )}
-
-                  {(user?.role === "facility_staff" || user?.role === "facility_admin") && (
-                    <Link
-                      href="/staff"
-                      className="inline-flex min-h-[44px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
-                    >
-                      <span className="sm:hidden">Desk</span>
-                      <span className="hidden sm:inline">Facility desk</span>
-                    </Link>
-                  )}
-
-                  <Link
-                    href="/about"
-                    className="hidden sm:inline-flex min-h-[44px] items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
-                  >
-                    How it works
-                  </Link>
-
-                  <Link
-                    href="/account?mode=access"
-                    className="inline-flex min-h-[44px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#0E6B5C] bg-[#F3FAF8] border border-[#0E6B5C]/20 hover:bg-[#CDE8E1]/50 transition max-w-[90px] sm:max-w-[140px] truncate"
-                    title={displayName ?? "Sign in or create an account"}
-                  >
-                    {displayName ? displayName : "Sign in"}
-                  </Link>
-                </nav>
-
-                {/* Status Badge from screenshot */}
-                {mode === "mock" ? (
-                  <span className="hidden xs:inline-flex rounded-full border border-dashed border-[#C98A1D] bg-white px-2 py-0.5 text-xs sm:text-xs font-bold text-[#8A6212] tracking-wide shrink-0">
-                    MOCK AI
-                  </span>
-                ) : (
-                  <span className="hidden xs:inline-flex rounded-full bg-[#CDE8E1] px-2 py-0.5 text-xs sm:text-xs font-bold text-[#0A5347] tracking-wide shrink-0">
-                    LIVE · {mode.toUpperCase()}
-                  </span>
-                )}
-              </div>
-            </div>
+            </nav>
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main id="main-content" className="mx-auto w-full max-w-4xl flex-1 flex flex-col px-3 sm:px-6">
+        <main id="main-content" className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 sm:px-6 sm:pb-10">
           {children}
         </main>
 
-        {/* Phone bottom bar (< 640px): only the destinations that make sense for this user */}
+        <footer className="hidden border-t border-border bg-surface sm:block">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-6 py-5 text-xs text-subtle-foreground">
+            <span>RioMed helps you find, book and pay for care. It does not give medical advice. In an emergency, call 112.</span>
+            <span>Places data: Google Maps · OpenStreetMap</span>
+          </div>
+        </footer>
+
+        {/* Phone tab bar (< 640px): only destinations that make sense for this user */}
         <nav
           aria-label="Mobile navigation"
-          className="sm:hidden sticky bottom-0 z-30 bg-white/95 backdrop-blur-xs border-t border-[#E3E0D6] flex items-stretch text-xs text-[#4B6560] pb-[env(safe-area-inset-bottom)]"
+          className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
         >
-          {(user?.role === "patient"
-            ? [["/", "🔍", "Search"], ["/dashboard", "📋", "Bookings"], ["/audit", "🛡️", "Access log"], ["/privacy", "⚙️", "Privacy"]]
-            : user?.role === "facility_staff" || user?.role === "facility_admin"
-              ? [["/", "🔍", "Search"], ["/staff", "🏥", "Desk"], ["/staff/catalogue", "🏷️", "Catalogue"]]
-              : user?.role === "operator"
-                ? [["/", "🔍", "Search"], ["/operator", "✅", "Approvals"]]
-                : [["/", "🔍", "Search"], ["/account?mode=access", "👤", "Sign in"], ["/about", "ℹ️", "How it works"]]
-          ).map(([href, icon, label]) => (
-            <Link key={href} href={href} className="flex-1 flex flex-col items-center justify-center min-h-[52px] py-1 hover:text-[#0A5347] hover:bg-[#F3FAF8]">
-              <span className="text-base leading-none" aria-hidden="true">{icon}</span>
-              <span className="mt-0.5 font-semibold">{label}</span>
+          {tabs.map(([href, Icon, label]) => (
+            <Link key={href} href={href} className="flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary">
+              <Icon className="h-5 w-5" aria-hidden />
+              <span>{label}</span>
             </Link>
           ))}
         </nav>

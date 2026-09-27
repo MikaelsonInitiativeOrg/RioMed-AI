@@ -3,34 +3,34 @@ import { STATUS_LABEL } from "@/lib/format";
 export function StatusBadge({ status }: { status: string }) {
   const label = STATUS_LABEL[status] ?? status;
 
-  let style = "bg-[#EAEAE4] text-[#4B6560]"; // default
+  let style = "bg-border-soft text-muted-foreground"; // default
 
   switch (status) {
     case "CONFIRMED":
     case "RESULT_AVAILABLE":
-      style = "bg-[#CDE8E1] text-[#0A5347]";
+      style = "bg-primary-muted text-primary-strong";
       break;
     case "HELD":
     case "PENDING_PAYMENT":
-      style = "bg-[#FFF4E5] text-[#8A6212]";
+      style = "bg-warning-soft text-warning-foreground";
       break;
     case "CHECKED_IN":
-      style = "bg-[#EAEAE4] text-[#4B6560]";
+      style = "bg-border-soft text-muted-foreground";
       break;
     case "COMPLETED":
-      style = "bg-[#CDE8E1]/60 text-[#0A5347]";
+      style = "bg-primary-muted/60 text-primary-strong";
       break;
     case "CANCELLED_BY_PATIENT":
     case "CANCELLED_BY_FACILITY":
-      style = "bg-[#FBE9E7] text-[#8A251C]";
+      style = "bg-danger-soft text-danger-foreground";
       break;
     case "REFUNDED":
-      style = "bg-[#FFF4E5] text-[#8A6212]";
+      style = "bg-warning-soft text-warning-foreground";
       break;
     case "EXPIRED":
     case "NO_SHOW":
     default:
-      style = "bg-[#EAEAE4] text-[#4B6560]";
+      style = "bg-border-soft text-muted-foreground";
       break;
   }
 

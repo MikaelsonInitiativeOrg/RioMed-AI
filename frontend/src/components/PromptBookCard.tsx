@@ -1,3 +1,4 @@
+import { CalendarPlus } from "lucide-react";
 import { getTest } from "@riomed/backend/core/catalog";
 import { previewPromptBook } from "@riomed/backend/server/promptBook";
 import { promptBookAction } from "@/app/actions";
@@ -12,15 +13,17 @@ import { lagosDateTime } from "@/lib/format";
 export async function PromptBookCard({ query }: { query: string }) {
   const preview = await previewPromptBook(query);
   if (preview.status === "emergency") return null;
+  // Only prompt for a clinic when the person actually asked to book ("near me" searches stay clean).
+  if (preview.status === "need" && !/\b(book|schedule|reserve)\b/i.test(query)) return null;
 
   if (preview.status === "need") {
     const options = preview.facilities.length <= 4 ? preview.facilities : [];
     return (
-      <div className="rounded-2xl border border-[#0E6B5C]/30 bg-[#F3FAF8] p-4 text-sm text-[#0A5347]">
-        <p className="font-bold">📅 Book for me</p>
-        <p className="mt-1 text-[#4B6560]">{preview.reason}</p>
+      <div className="rounded-xl border border-primary/30 bg-primary-soft p-4 text-sm text-primary-strong">
+        <p className="inline-flex items-center gap-2 font-bold text-foreground"><CalendarPlus className="h-4 w-4 text-primary" aria-hidden />Book for me</p>
+        <p className="mt-1 text-muted-foreground">{preview.reason}</p>
         {options.length > 0 && (
-          <p className="mt-2 text-xs text-[#4B6560]">
+          <p className="mt-2 text-xs text-muted-foreground">
             Options: {options.map((f) => f.name).join(" · ")}
           </p>
         )}
@@ -29,22 +32,22 @@ export async function PromptBookCard({ query }: { query: string }) {
   }
 
   return (
-    <div className="rounded-2xl border border-[#0E6B5C]/30 bg-[#F3FAF8] p-4 text-sm text-[#0A5347] space-y-3">
+    <div className="rounded-xl border border-primary/30 bg-primary-soft p-4 text-sm text-primary-strong space-y-3">
       <div>
-        <p className="font-bold">📅 Book for me</p>
-        <p className="mt-1 text-[#4B6560]">
+        <p className="inline-flex items-center gap-2 font-bold text-foreground"><CalendarPlus className="h-4 w-4 text-primary" aria-hidden />Book for me</p>
+        <p className="mt-1 text-muted-foreground">
           {getTest(preview.testCode)?.name ?? preview.testName} at {preview.facility.name}. Pick a time — it will be held for 15 minutes while you pay.
         </p>
       </div>
       <div className="space-y-2">
         {preview.slots.map((s) => (
-          <form key={s.id} action={promptBookAction} className="flex items-center justify-between gap-3 rounded-xl border border-[#E3E0D6] bg-white px-3 py-2">
-            <span className="font-semibold text-[#12262B]">{lagosDateTime(s.start)}</span>
+          <form key={s.id} action={promptBookAction} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2">
+            <span className="font-semibold text-foreground">{lagosDateTime(s.start)}</span>
             <input type="hidden" name="q" value={query} />
             <input type="hidden" name="slotId" value={s.id} />
             <button
               type="submit"
-              className="inline-flex min-h-[44px] shrink-0 items-center rounded-xl bg-[#0E6B5C] px-4 text-xs font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] active:scale-[0.98] transition"
+              className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-strong"
             >
               Book this for me
             </button>

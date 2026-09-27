@@ -13,20 +13,20 @@ export default async function OperatorPage() {
   if (!pending) redirect("/account?mode=access&next=/operator");
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-emerald-950">Facility accounts waiting for approval</h1>
-      <p className="text-sm text-slate-600">Check that the person really works at the facility (for example, call the facility&apos;s registered phone number) before approving.</p>
-      {pending.length === 0 && <p className="rounded-xl bg-white border p-4 text-sm">Nothing waiting.</p>}
+      <h1 className="text-xl font-bold text-foreground">Facility accounts waiting for approval</h1>
+      <p className="text-sm text-muted-foreground">Check that the person really works at the facility (for example, call the facility&apos;s registered phone number) before approving.</p>
+      {pending.length === 0 && <p className="rounded-xl bg-surface border p-4 text-sm">Nothing waiting.</p>}
       <ul className="space-y-3">
         {pending.map((u) => (
-          <li key={u.id} className="rounded-xl bg-white border border-emerald-900/10 p-4">
-            <p className="font-semibold">{u.name} <span className="font-normal text-slate-500">@{u.username}</span></p>
-            <p className="text-sm text-slate-600">{u.facilityName} · requested {lagosDateTime(u.createdAt)}</p>
+          <li key={u.id} className="rounded-xl bg-surface border border-border-strong p-4">
+            <p className="font-semibold">{u.name} <span className="font-normal text-subtle-foreground">@{u.username}</span></p>
+            <p className="text-sm text-muted-foreground">{u.facilityName} · requested {lagosDateTime(u.createdAt)}</p>
             <div className="mt-3 flex gap-2">
               {(["approve", "reject"] as const).map((d) => (
                 <form key={d} action={decideAccountAction}>
                   <input type="hidden" name="userId" value={u.id} />
                   <input type="hidden" name="decision" value={d} />
-                  <button className={d === "approve" ? "rounded-lg bg-emerald-700 px-4 py-2 text-sm text-white" : "rounded-lg border px-4 py-2 text-sm"}>
+                  <button className={d === "approve" ? "rounded-lg bg-primary px-4 py-2 text-sm text-white" : "rounded-lg border px-4 py-2 text-sm"}>
                     {d === "approve" ? "Approve" : "Reject"}
                   </button>
                 </form>

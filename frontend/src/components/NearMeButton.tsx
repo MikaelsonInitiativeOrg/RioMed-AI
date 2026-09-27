@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { LocateFixed, Loader2 } from "lucide-react";
 
 /**
  * "Use my location": requests the device position automatically on mount (with
@@ -67,16 +68,19 @@ export function NearMeButton({ query, auto = true }: { query: string; auto?: boo
         type="button"
         onClick={() => (found ? router.push(found) : locate())}
         disabled={state === "locating"}
-        className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#0E6B5C] px-5 text-sm font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] disabled:opacity-70"
+        className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-bold text-white shadow-sm transition-colors duration-150 hover:bg-primary-strong disabled:opacity-70 sm:w-auto"
       >
-        <span aria-hidden="true">📍</span>
+        {state === "locating" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <LocateFixed className="h-4 w-4" aria-hidden />}
         {state === "locating" ? "Finding your location…" : state === "ready" ? "Show clinics closest to me" : "Use my location"}
       </button>
-      <p className="text-xs text-[#4B6560]">
-        Your browser asks before sharing your location. It&apos;s rounded to about 100 m, used only for this search and the Google Maps lookup, and never saved. Your name and account are never sent to Google.
-      </p>
+      <details className="text-xs text-subtle-foreground">
+        <summary className="inline-flex min-h-[32px] items-center underline underline-offset-2">How your location is used</summary>
+        <p className="mt-1 leading-relaxed">
+          Your browser asks before sharing it. It&apos;s rounded to about 100 m, used only for this search and the Google Maps lookup, and never saved. Your name and account are never sent to Google.
+        </p>
+      </details>
       {state === "error" && (
-        <p role="alert" className="text-sm text-[#8A251C]">
+        <p role="alert" className="text-sm text-warning-foreground">
           {message}
         </p>
       )}

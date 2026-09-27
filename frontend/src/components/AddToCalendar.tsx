@@ -1,5 +1,7 @@
 "use client";
 
+import { CalendarPlus } from "lucide-react";
+
 function stamp(d: Date): string {
   return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 }
@@ -62,10 +64,10 @@ export function AddToCalendar({
   }
 
   return (
-    <section aria-label="Add to calendar" className="rounded-2xl border border-[#E3E0D6] bg-white p-4 sm:p-5 shadow-xs space-y-3">
-      <h2 className="font-heading text-base font-bold text-[#0A5347]">📅 Add to your calendar</h2>
+    <section aria-label="Add to calendar" className="rounded-2xl border border-border bg-surface p-4 sm:p-5 shadow-xs space-y-3">
+      <h2 className="font-heading text-base font-bold text-primary-strong"><CalendarPlus className="mr-1.5 inline h-4 w-4 align-[-2px] text-primary" aria-hidden />Add to your calendar</h2>
       {tentative && (
-        <p className="text-xs text-[#8A6212]">
+        <p className="text-xs text-warning-foreground">
           This is a 15-minute hold, not a confirmation yet — pay to confirm it.
         </p>
       )}
@@ -74,14 +76,14 @@ export function AddToCalendar({
           href={googleUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-[44px] items-center rounded-xl bg-[#0E6B5C] px-4 text-xs font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] transition"
+          className="inline-flex min-h-[44px] items-center rounded-xl bg-primary px-4 text-xs font-heading font-bold text-white shadow-xs hover:bg-primary-strong transition"
         >
           Add to Google Calendar
         </a>
         <button
           type="button"
           onClick={downloadIcs}
-          className="inline-flex min-h-[44px] items-center rounded-xl border border-[#E3E0D6] bg-white px-4 text-xs font-semibold text-[#4B6560] hover:bg-[#F7F5F0] transition"
+          className="inline-flex min-h-[44px] items-center rounded-xl border border-border bg-surface px-4 text-xs font-semibold text-muted-foreground hover:bg-background transition"
         >
           Download .ics (Apple / Outlook)
         </button>

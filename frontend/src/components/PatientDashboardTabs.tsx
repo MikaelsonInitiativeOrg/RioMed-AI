@@ -50,14 +50,14 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
   return (
     <div className="space-y-6">
       {/* Tabs matching Design System Mockup 4 */}
-      <div className="flex gap-6 border-b border-[#E3E0D6] text-xs sm:text-sm">
+      <div className="flex gap-6 border-b border-border text-xs sm:text-sm">
         <button
           type="button"
           onClick={() => setActiveTab("upcoming")}
           className={`min-h-[44px] pb-3 font-heading transition ${
             activeTab === "upcoming"
-              ? "font-bold text-[#0A5347] border-b-2 border-[#0A5347]"
-              : "text-[#8B9490] hover:text-[#12262B]"
+              ? "font-bold text-primary-strong border-b-2 border-primary-strong"
+              : "text-subtle-foreground hover:text-foreground"
           }`}
         >
           Upcoming ({upcomingAppts.length})
@@ -67,8 +67,8 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
           onClick={() => setActiveTab("past")}
           className={`min-h-[44px] pb-3 font-heading transition ${
             activeTab === "past"
-              ? "font-bold text-[#0A5347] border-b-2 border-[#0A5347]"
-              : "text-[#8B9490] hover:text-[#12262B]"
+              ? "font-bold text-primary-strong border-b-2 border-primary-strong"
+              : "text-subtle-foreground hover:text-foreground"
           }`}
         >
           Past ({pastAppts.length})
@@ -78,8 +78,8 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
           onClick={() => setActiveTab("results")}
           className={`min-h-[44px] pb-3 font-heading transition ${
             activeTab === "results"
-              ? "font-bold text-[#0A5347] border-b-2 border-[#0A5347]"
-              : "text-[#8B9490] hover:text-[#12262B]"
+              ? "font-bold text-primary-strong border-b-2 border-primary-strong"
+              : "text-subtle-foreground hover:text-foreground"
           }`}
         >
           Results ({resultAppts.length})
@@ -113,38 +113,38 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
             return (
               <div
                 key={a.id}
-                className="rounded-2xl border border-[#E3E0D6] bg-white p-4 sm:p-5 shadow-2xs transition hover:border-[#0E6B5C]/40"
+                className="rounded-2xl border border-border bg-surface p-4 sm:p-5 shadow-2xs transition hover:border-primary/40"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-heading font-bold text-sm sm:text-base text-[#12262B]">
+                  <h3 className="font-heading font-bold text-sm sm:text-base text-foreground">
                     {testLabel}
                   </h3>
                   <StatusBadge status={a.status} />
                 </div>
 
-                <p className="text-xs sm:text-sm text-[#4B6560]">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {a.facilityName} · {lagosDateTime(a.slotStart)}
                   {a.amountKobo > 0 && ` · ${formatNaira(a.amountKobo)}`}
                 </p>
 
-                <p className="font-mono text-xs text-[#8B9490] mt-1">
-                  Ref: <strong className="text-[#4B6560]">{a.reference}</strong>
+                <p className="font-mono text-xs text-subtle-foreground mt-1">
+                  Ref: <strong className="text-muted-foreground">{a.reference}</strong>
                 </p>
 
-                <div className="mt-3 pt-3 border-t border-[#F0EEE7] flex items-center justify-between">
+                <div className="mt-3 pt-3 border-t border-border-soft flex items-center justify-between">
                   {a.hasResult ? (
-                    <span className="text-xs font-semibold text-[#0A5347] bg-[#F3FAF8] border border-[#0E6B5C]/30 px-2.5 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold text-primary-strong bg-primary-soft border border-primary/30 px-2.5 py-0.5 rounded-full">
                       ✓ Official Result Available
                     </span>
                   ) : (
-                    <span className="text-xs text-[#8B9490]">
+                    <span className="text-xs text-subtle-foreground">
                       {a.status === "CONFIRMED" ? "Show reference code on arrival" : ""}
                     </span>
                   )}
 
                   <Link
                     href={`/appointments/${a.id}`}
-                    className="inline-flex items-center gap-1 text-xs font-heading font-bold text-[#0E6B5C] hover:underline min-h-[44px]"
+                    className="inline-flex items-center gap-1 text-xs font-heading font-bold text-primary hover:underline min-h-[44px]"
                   >
                     View details →
                   </Link>
@@ -158,27 +158,27 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
       {/* Available Results Quick Section (Design System Mockup 4) */}
       {resultAppts.length > 0 && activeTab !== "results" && (
         <div className="pt-4 space-y-3">
-          <h3 className="font-heading font-bold text-sm text-[#0A5347]">
+          <h3 className="font-heading font-bold text-sm text-primary-strong">
             Recent Results
           </h3>
           <div className="space-y-2">
             {resultAppts.slice(0, 3).map((r) => (
               <div
                 key={r.id}
-                className="rounded-2xl border border-[#E3E0D6] bg-white p-3.5 flex items-center justify-between gap-3 shadow-2xs"
+                className="rounded-2xl border border-border bg-surface p-3.5 flex items-center justify-between gap-3 shadow-2xs"
               >
                 <div>
-                  <div className="font-heading font-bold text-xs sm:text-sm text-[#12262B]">
+                  <div className="font-heading font-bold text-xs sm:text-sm text-foreground">
                     {getTest(r.testCode)?.name ?? r.testCode}
                   </div>
-                  <div className="text-xs text-[#4B6560]">
+                  <div className="text-xs text-muted-foreground">
                     Available · {r.facilityName}
                   </div>
                 </div>
 
                 <Link
                   href={`/appointments/${r.id}`}
-                  className="inline-flex min-h-[44px] items-center rounded-lg bg-[#0E6B5C] text-white px-4 text-sm font-heading font-bold hover:bg-[#0A5347] transition shadow-xs shrink-0"
+                  className="inline-flex min-h-[44px] items-center rounded-lg bg-primary text-white px-4 text-sm font-heading font-bold hover:bg-primary-strong transition shadow-xs shrink-0"
                 >
                   Open Result
                 </Link>
@@ -189,7 +189,7 @@ export function PatientDashboardTabs({ appointments }: PatientDashboardTabsProps
       )}
 
       {/* Footer Navigation Links matching Design System */}
-      <div className="pt-4 border-t border-[#E3E0D6] space-y-2 text-xs font-semibold text-[#0E6B5C]">
+      <div className="pt-4 border-t border-border space-y-2 text-xs font-semibold text-primary">
         <div>
           <Link href="/audit" className="hover:underline">
             View access log →

@@ -1,3 +1,4 @@
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
@@ -23,7 +24,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
       <div>
         <Link
           href="/dashboard"
-          className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-[#0E6B5C] hover:text-[#0A5347] transition"
+          className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-strong transition"
         >
           ← Back to Dashboard
         </Link>
@@ -32,90 +33,90 @@ export default async function AuditPage(props: PageProps<"/audit">) {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0A5347] text-white text-sm">
-            🛡️
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-strong text-white text-sm">
+            <ShieldCheck className="h-6 w-6" aria-hidden />
           </span>
-          <h1 className="font-heading text-xl sm:text-2xl font-bold text-[#0A5347]">
+          <h1 className="font-heading text-xl sm:text-2xl font-bold text-primary-strong">
             Access &amp; Security Audit Trail
           </h1>
         </div>
-        <p className="mt-1 text-xs sm:text-sm text-[#4B6560]">
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
           Sign-ins, check-ins, result uploads and every time a result PDF is opened are recorded here, with who did it.
         </p>
       </div>
 
       {/* NDPA Compliance Banner */}
-      <div className="rounded-2xl border border-[#0E6B5C]/30 bg-[#F3FAF8] p-4 sm:p-5 text-xs sm:text-sm text-[#0A5347] space-y-2">
+      <div className="rounded-2xl border border-primary/30 bg-primary-soft p-4 sm:p-5 text-xs sm:text-sm text-primary-strong space-y-2">
         <div className="flex items-center justify-between">
           <span className="font-heading font-bold text-sm">
             Built toward Nigeria Data Protection Act (NDPA) requirements
           </span>
-          <span className="rounded-full bg-[#0A5347] px-2.5 py-0.5 text-xs font-bold text-white uppercase">
+          <span className="rounded-full bg-primary-strong px-2.5 py-0.5 text-xs font-bold text-white uppercase">
             Not yet legally reviewed
           </span>
         </div>
-        <p className="text-xs text-[#4B6560] leading-relaxed">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           Only the text you type into search goes to the AI. Your account, results and location never do. Result links expire after 5 minutes. The database is encrypted at rest by the hosting provider. This hackathon demo uses synthetic data.
         </p>
       </div>
 
       {/* Audit Events List */}
-      <div className="rounded-2xl border border-[#E3E0D6] bg-white overflow-hidden shadow-2xs">
-        <div className="bg-[#F7F5F0] px-4 py-3 border-b border-[#E3E0D6] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h2 className="font-heading font-bold text-xs uppercase tracking-wider text-[#4B6560]">
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-2xs">
+        <div className="bg-background px-4 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h2 className="font-heading font-bold text-xs uppercase tracking-wider text-muted-foreground">
             Audit events ({filtered.length})
           </h2>
           {filterRef && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#0A5347] font-semibold">
+              <span className="text-xs text-primary-strong font-semibold">
                 Filtering by ref: {filterRef}
               </span>
-              <Link href="/audit" className="text-xs text-[#8B9490] hover:text-[#12262B]">
+              <Link href="/audit" className="text-xs text-subtle-foreground hover:text-foreground">
                 Clear ✕
               </Link>
             </div>
           )}
         </div>
 
-        <div className="divide-y divide-[#F0EEE7]">
+        <div className="divide-y divide-border-soft">
           {filtered.length === 0 && (
-            <p className="p-4 text-xs text-[#4B6560]">No recorded events yet. They appear when you sign in, check in, or when a result is uploaded or opened.</p>
+            <p className="p-4 text-xs text-muted-foreground">No recorded events yet. They appear when you sign in, check in, or when a result is uploaded or opened.</p>
           )}
           {filtered.map((e) => (
-            <div key={e.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-[#F3FAF8]/40 transition">
+            <div key={e.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:bg-primary-soft/40 transition">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[#12262B]">{e.action}</span>
+                  <span className="font-bold text-foreground">{e.action}</span>
                   {!e.byYou && (
-                    <span className="bg-[#FFF4E0] text-[#7A4B00] text-xs font-bold px-2 py-0.5 rounded-full">BY SOMEONE ELSE</span>
+                    <span className="bg-warning-soft text-warning-foreground text-xs font-bold px-2 py-0.5 rounded-full">BY SOMEONE ELSE</span>
                   )}
                 </div>
-                <p className="text-[#4B6560]">
-                  By: <strong className="text-[#12262B]">{e.byName}</strong>
+                <p className="text-muted-foreground">
+                  By: <strong className="text-foreground">{e.byName}</strong>
                   {e.reference && (
                     <>
-                      {" "}· Ref: <strong className="font-mono text-[#12262B]">{e.reference}</strong> · {e.facilityName}
+                      {" "}· Ref: <strong className="font-mono text-foreground">{e.reference}</strong> · {e.facilityName}
                     </>
                   )}
                 </p>
               </div>
-              <div className="text-right text-xs text-[#8B9490]">{lagosDateTime(e.at)}</div>
+              <div className="text-right text-xs text-subtle-foreground">{lagosDateTime(e.at)}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Audit Export & Retention Rules */}
-      <div className="rounded-xl border border-[#E3E0D6] bg-white p-4 text-xs text-[#4B6560] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="rounded-xl border border-border bg-surface p-4 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <span className="font-bold text-[#12262B]">Audit Retention Notice</span>
-          <p className="text-xs text-[#8B9490]">
+          <span className="font-bold text-foreground">Audit Retention Notice</span>
+          <p className="text-xs text-subtle-foreground">
             Users cannot edit or delete audit events. The retention period is still to be decided (PRD section 11.5).
           </p>
         </div>
         <Link
           href="/privacy"
-          className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-[#0E6B5C] px-3.5 py-1.5 text-xs font-bold text-[#0E6B5C] hover:bg-[#F3FAF8] shrink-0"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-primary px-3.5 py-1.5 text-xs font-bold text-primary hover:bg-primary-soft shrink-0"
         >
           Manage Data &amp; Privacy →
         </Link>
