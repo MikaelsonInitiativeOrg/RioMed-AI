@@ -1,5 +1,6 @@
 import { resolveLocation } from "@riomed/backend/core/geo";
 import { findLivePlaces } from "@riomed/backend/server/livePlaces";
+import { parseDeviceOrigin } from "@riomed/backend/server/search";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +18,15 @@ function allowed(ip: string): boolean {
   return true;
 }
 
-/** GET /api/live-places?address=… → { status, places[{ placeId, name, mapsUrl }], reason? } */
+/** GET /api/live-places?address=…[&lat=…&lng=…] → { status, places[{ placeId, name, mapsUrl }], reason? }
+ *  lat/lng come only from the user's "Use my location" tap; rounded to ~100 m, never stored or logged. */
 export async function GET(request: Request) {
-  const address = new URL(request.url).searchParams.get("address") ?? "";
+  const params = new URL(request.url).searchParams;
+  const address = params.get("address") ?? "";
+  const device = parseDeviceOrigin(params.get("lat"), params.get("lng"));
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (!allowed(ip)) return Response.json({ status: "unavailable", places: [], reason: "Too many live searches, try again in a few minutes" }, { status: 429 });
-  const origin = resolveLocation(address); // bias toward a known area when we have one; never guessed
+  const origin = device ?? resolveLocation(address); // device location, else a known area; never guessed
   const result = await findLivePlaces({ address, origin });
   return Response.json(result, { headers: { "Cache-Control": "no-store" } });
 }

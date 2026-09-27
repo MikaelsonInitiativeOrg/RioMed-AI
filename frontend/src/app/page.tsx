@@ -6,11 +6,12 @@ import { SearchRefine } from "@/components/SearchRefine";
 import { FacilityCard } from "@/components/FacilityCard";
 import { EmptyState } from "@/components/EmptyState";
 import { LiveNearby } from "@/components/LiveNearby";
+import { NearMeButton } from "@/components/NearMeButton";
 import { RioMedLogo } from "@/components/Logo";
 import { redirect } from "next/navigation";
 import { detectAccountIntent, looksLikeCredential } from "@riomed/backend/core/intent/account";
 import { HomeComposer } from "@/components/HomeComposer";
-import { runPromptSearch, searchWithIntent, type Found, type SearchView } from "@riomed/backend/server/search";
+import { parseDeviceOrigin, runPromptSearch, searchWithIntent, type Found, type SearchView } from "@riomed/backend/server/search";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,8 @@ export default async function Home(props: PageProps<"/">) {
   const sp = await props.searchParams;
   const q = one(sp.q)?.trim() ?? "";
   const area = one(sp.area);
+  // Set only after the user taps "Use my location" (NearMeButton).
+  const deviceOrigin = parseDeviceOrigin(one(sp.lat), one(sp.lng));
   let view: (Found & { intent: SearchIntent } & Partial<Pick<SearchView, "ai" | "emergency" | "totalMs">>) | null = null;
   let error: string | null = null;
 
@@ -40,7 +43,7 @@ export default async function Home(props: PageProps<"/">) {
 
   if (q) {
     if (q.length > 1000) error = "Please keep your request under 1,000 characters.";
-    else view = await runPromptSearch(q);
+    else view = await runPromptSearch(q, { deviceOrigin });
   } else if (area) {
     const test = one(sp.test);
     const day = one(sp.day) || null;
@@ -217,10 +220,11 @@ export default async function Home(props: PageProps<"/">) {
 
                 {!view.place && view.intent.intent !== "unsupported" && !view.intent.locationQuery && (
                   <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
-                    <p className="font-bold">Location required</p>
-                    <p className="mt-1">
-                      Where are you? Choose an area above so we can find facilities near you.
+                    <p className="font-bold">Where are you?</p>
+                    <p className="mt-1 mb-3">
+                      Share your location to see hospitals, clinics and health centres near you, or choose an area above.
                     </p>
+                    <NearMeButton query={q} />
                   </div>
                 )}
                 {!view.place && view.intent.locationQuery && (
@@ -249,7 +253,11 @@ export default async function Home(props: PageProps<"/">) {
                     {view.results.length === 0 ? (
                       <EmptyState
                         title="No facilities found nearby"
-                        description={`No listed facility offers this test within 50 km of ${view.place.name}. Try selecting another test or expanding to adjacent Lagos areas.`}
+                        description={
+                          view.place.name === "your location"
+                            ? "RioMed's partner labs are only in Lagos for now. Places near you from Google Maps are listed below."
+                            : `No listed facility offers this test within 50 km of ${view.place.name}. Try selecting another test or expanding to adjacent Lagos areas.`
+                        }
                         actionHref="/?area=Ikeja"
                         actionLabel="Search in Ikeja"
                         hint="You can also call nearby general hospitals directly."
@@ -270,8 +278,12 @@ export default async function Home(props: PageProps<"/">) {
                 )}
 
                 {/* FR-027: live nearby places from Google Maps (unverified, not bookable) */}
-                {!view.emergency?.isEmergency && (view.intent.locationQuery || view.place?.name) && (
-                  <LiveNearby address={(view.intent.locationQuery ?? view.place?.name)!} />
+                {!view.emergency?.isEmergency && (view.intent.locationQuery || view.place) && (
+                  <LiveNearby
+                    address={view.intent.locationQuery ?? (deviceOrigin && view.place?.name === "your location" ? "" : view.place?.name ?? "")}
+                    lat={deviceOrigin && !view.intent.locationQuery ? deviceOrigin.lat : undefined}
+                    lng={deviceOrigin && !view.intent.locationQuery ? deviceOrigin.lng : undefined}
+                  />
                 )}
               </div>
             </div>

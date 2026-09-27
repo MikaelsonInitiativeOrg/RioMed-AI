@@ -93,7 +93,8 @@ export async function findLivePlaces(
 ): Promise<LivePlacesResult> {
   const env = opts.env ?? process.env;
   if (!livePlacesEnabled(env)) return { status: "disabled", places: [], reason: "Live search needs AI_PROVIDER=gemini and a key" };
-  const address = sanitizeAddress(input.address);
+  // With a shared device location and no typed address, search around the coordinates.
+  const address = sanitizeAddress(input.address) ?? (input.origin ? "the user's current location" : null);
   if (!address) return { status: "unavailable", places: [], reason: "No address" };
 
   const key = `${address.toLowerCase()}|${input.origin ? `${input.origin.lat.toFixed(3)},${input.origin.lng.toFixed(3)}` : ""}`;

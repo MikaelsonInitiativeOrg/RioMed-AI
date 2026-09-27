@@ -1,6 +1,6 @@
 import "server-only";
 import { parseIntent, type IntentResult } from "../core/ai";
-import { resolveLocation, type Place } from "../core/geo";
+import { resolveLocation, type LatLng, type Place } from "../core/geo";
 import { resolveWhen, type SearchIntent, type TimeWindow } from "../core/intent";
 import { searchFacilities, type RankedFacility } from "../core/search";
 import { isSlotBookable } from "../core/booking";
@@ -22,8 +22,18 @@ export interface SearchView {
 /** Structured search: used directly by the form (FR-025) and after the prompt is parsed. */
 export type Found = Pick<SearchView, "place" | "window" | "results" | "radiusKm" | "widened">;
 
-export async function searchWithIntent(intent: SearchIntent, now = new Date()): Promise<Found> {
-  const place = resolveLocation(intent.locationQuery);
+/** Device location from "Use my location": rounded to ~100 m, used only for this request. */
+export function parseDeviceOrigin(lat: unknown, lng: unknown): LatLng | null {
+  const la = Number(lat);
+  const ln = Number(lng);
+  if (!Number.isFinite(la) || !Number.isFinite(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180) return null;
+  return { lat: Math.round(la * 1000) / 1000, lng: Math.round(ln * 1000) / 1000 };
+}
+
+export async function searchWithIntent(intent: SearchIntent, now = new Date(), deviceOrigin: LatLng | null = null): Promise<Found> {
+  // A typed place wins; the device location is used when the user shared it and typed no known place.
+  const typed = resolveLocation(intent.locationQuery);
+  const place: Place | null = typed ?? (deviceOrigin ? { name: "your location", kind: "area", ...deviceOrigin } : null);
   const window = resolveWhen(intent.when, now);
   if (!place) return { place: null, window, results: [], radiusKm: 0, widened: false };
 
@@ -75,11 +85,11 @@ export async function searchWithIntent(intent: SearchIntent, now = new Date()): 
   return { place, window, results, radiusKm: res.radiusKm, widened: res.widened };
 }
 
-export async function runPromptSearch(query: string): Promise<SearchView> {
+export async function runPromptSearch(query: string, opts: { deviceOrigin?: LatLng | null } = {}): Promise<SearchView> {
   const t0 = Date.now();
   const timeoutMs = Number(process.env.AI_TIMEOUT_MS) || 1500;
   const ai = await parseIntent(query, { timeoutMs });
-  const found = await searchWithIntent(ai.intent);
+  const found = await searchWithIntent(ai.intent, new Date(), opts.deviceOrigin ?? null);
   return {
     query,
     ai: { source: ai.source, mode: ai.mode, latencyMs: ai.latencyMs, fallbackReason: ai.fallbackReason, model: ai.model },
