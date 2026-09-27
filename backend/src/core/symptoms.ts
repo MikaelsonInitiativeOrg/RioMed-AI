@@ -24,17 +24,21 @@ interface SymptomGroup {
 const GROUPS: SymptomGroup[] = [
   {
     label: "fever",
-    phrases: ["fever", "feverish", "body hot", "hot body", "my body is hot", "body dey hot", "high temperature", "temperature", "chills", "shivering", "malaria symptoms", "cold and catarrh with fever"],
+    phrases: ["fever", "feverish", "body hot", "hot body", "my body is hot", "body dey hot", "my body dey hot", "high temperature",
+      // Yoruba: ibà, ara mi gbóná / ara mi ń gbóná; Igbo: ịba, ahụ na-ekpo m ọkụ
+      "iba", "ara mi gbona", "ara gbona", "ara mi n gbona", "ahu na-ekpo m oku", "ahu m na-ekpo oku", "na-ekpo oku", "temperature", "chills", "shivering", "malaria symptoms", "cold and catarrh with fever"],
     tests: ["MALARIA_MP", "WIDAL", "FBC"],
   },
   {
     label: "tiredness or weakness",
-    phrases: ["weak", "weakness", "tired", "tiredness", "fatigue", "no strength", "body weak", "dizzy", "dizziness", "pale"],
+    phrases: ["weak", "weakness", "tired", "tiredness", "fatigue", "no strength", "body weak", "body dey weak", "i no get strength", "body no strong",
+      // Yoruba: ara mi kò le, àìlera, ó rẹ̀ mí; Igbo: ike gwụrụ m, adịghị m ike
+      "ara mi o le", "ara mi ko le", "ailera", "o re mi", "ike gwuru m", "adighi m ike", "dizzy", "dizziness", "pale"],
     tests: ["PCV", "FBC", "FBS"],
   },
   {
     label: "urinary symptoms",
-    phrases: ["burning urine", "pain when urinating", "painful urination", "frequent urination", "urinating often", "peeing often", "smelly urine", "always thirsty"],
+    phrases: ["burning urine", "pain when urinating", "painful urination", "frequent urination", "urinating often", "i dey piss well well", "peeing often", "smelly urine", "always thirsty"],
     tests: ["URINALYSIS", "FBS"],
   },
   {

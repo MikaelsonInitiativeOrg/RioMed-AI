@@ -1,6 +1,8 @@
-/** Lowercase, straighten apostrophes, collapse whitespace. */
+/** Lowercase, drop accents and tone marks (Yoruba/Igbo "ìbà", "ụlọ" match "iba", "ulo"), straighten apostrophes, collapse whitespace. */
 export function normalize(text: string): string {
   return text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
     .toLowerCase()
     .replace(/[‘’ʼ`]/g, "'")
     .replace(/\s+/g, " ")
