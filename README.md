@@ -75,7 +75,7 @@ can't suggest tests from symptoms. It closes the 2 cases the evaluation caught.
 ```sh
 npm install
 cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local   # DATABASE_URL + DIRECT_URL (Postgres/Neon), AI and Paystack test keys
+cp frontend/.env.example frontend/.env.local   # DATABASE_URL + DIRECT_URL (Postgres/Neon), AI keys
 npm run db:push && npm run db:seed
 npm run dev                                    # http://localhost:3000
 ```
@@ -116,11 +116,11 @@ The tests in `backend/tests/core` were written by a separate test author, from
 This is an npm-workspaces monorepo:
 
 - **`backend/`** (`@riomed/backend`) holds everything except the UI.
-  - `src/core/` is the domain logic: intent parsing, emergency rules, ranking, booking state machine, money, Paystack checks, access control and the AI adapter. It is pure TypeScript and the single source of truth.
+  - `src/core/` is the domain logic: intent parsing, emergency rules, ranking, booking state machine, money, bank-transfer rules, access control and the AI adapter. It is pure TypeScript and the single source of truth.
   - `src/server/` holds the database, booking transactions, payments and the read models the UI uses.
   - It also holds `prisma/`, `tests/`, `eval/` and `scripts/`.
 - **`frontend/`** (`@riomed/frontend`) is the Next.js app: pages, components and styles. It gets all data from `@riomed/backend` and never touches the database. The contract is [docs/contracts/ui.md](docs/contracts/ui.md).
 - [AGENTS.md](AGENTS.md) sets out who owns what when several AI agents work on the repo.
 - `reference/ai-starters/` holds the organisers' starter templates that the AI adapter is ported from.
 
-Stack: Next.js 16, TypeScript (strict), Tailwind, Zod, Prisma on Postgres (Neon) and Paystack.
+Stack: Next.js 16, TypeScript (strict), Tailwind, Zod, Prisma on Postgres (Neon); payments by direct bank transfer.
