@@ -97,7 +97,13 @@ function buildRequest(
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts: [{ text: user }] }],
           // Extraction, not reasoning: minimal thinking keeps latency low and predictable.
-          generationConfig: { maxOutputTokens: 300, temperature: 0, responseMimeType: "application/json", thinkingConfig: { thinkingLevel: "minimal" } },
+          generationConfig: {
+            maxOutputTokens: 300,
+            temperature: 0,
+            responseMimeType: "application/json",
+            // Only models known to accept it: others would answer 400 and cost a retry round trip.
+            ...(/gemini-3\.5/.test(model) ? { thinkingConfig: { thinkingLevel: "minimal" } } : {}),
+          },
         }),
       },
       extract: (j) => {

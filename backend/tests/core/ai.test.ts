@@ -543,7 +543,7 @@ describe("parseIntent: no tests from symptoms (FR-017 guard)", () => {
 });
 
 describe("parseIntent: Gemini thinking config", () => {
-  const env = { AI_PROVIDER: "gemini", AI_API_KEY: "k", AI_MODEL: "m" };
+  const env = { AI_PROVIDER: "gemini", AI_API_KEY: "k", AI_MODEL: "gemini-3.5-flash-lite" };
   const good = JSON.stringify({ intent: "find_facility", tests: [], locationQuery: "Kano", when: null, facilityType: "clinic", confidence: 0.9 });
   it("asks for minimal thinking", async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify(geminiBody(good)), { status: 200 }));
@@ -562,5 +562,16 @@ describe("parseIntent: Gemini thinking config", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     const retry = JSON.parse(String((fetchImpl.mock.calls[1] as unknown as [string, RequestInit])[1].body));
     expect(retry.generationConfig.thinkingConfig).toBeUndefined();
+  });
+});
+
+describe("parseIntent: thinking config only for models that accept it", () => {
+  it("omits thinkingConfig for other models", async () => {
+    const good = JSON.stringify({ intent: "find_facility", tests: [], locationQuery: "Kano", when: null, facilityType: "clinic", confidence: 0.9 });
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(geminiBody(good)), { status: 200 }));
+    await parseIntent("clinics in Kano", { env: { AI_PROVIDER: "gemini", AI_API_KEY: "k", AI_MODEL: "gemini-3.1-flash-lite" }, fetchImpl: fetchImpl as unknown as typeof fetch });
+    const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(body.generationConfig.thinkingConfig).toBeUndefined();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
