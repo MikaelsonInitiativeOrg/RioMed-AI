@@ -7,7 +7,7 @@ Two agents work on this repo: a **frontend agent** (UI design) and a **backend a
 | Area | Owner | Notes |
 | --- | --- | --- |
 | `frontend/src/app/**` pages, `layout.tsx`, `loading.tsx`, `frontend/src/components/**`, `frontend/src/app/globals.css`, `frontend/public/**`, `frontend/src/lib/format.ts` | Frontend agent | Follow [docs/contracts/ui.md](docs/contracts/ui.md) |
-| `backend/**`, `frontend/src/app/actions.ts`, `frontend/src/app/api/**`, `frontend/src/app/pay/callback/**`, `frontend/src/lib/session.ts` | Backend agent | Follow [docs/contracts/core.md](docs/contracts/core.md) |
+| `backend/**`, `frontend/src/app/actions.ts`, `frontend/src/app/api/**`, `frontend/src/app/pay/callback/**`, `frontend/src/lib/session.ts`, `frontend/src/proxy.ts`, the data flow in `frontend/src/app/account/**` and `frontend/src/app/operator/**` | Backend agent | Follow [docs/contracts/core.md](docs/contracts/core.md) |
 | Root files, `docs/**`, `implementation.md`, `package.json` files | Both, by agreement | Say what you changed in the PR |
 
 Never edit files the other agent owns. To ask for a change, add it to the "Requests" section of `docs/contracts/ui.md`.

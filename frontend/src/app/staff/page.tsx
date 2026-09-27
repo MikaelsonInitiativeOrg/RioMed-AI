@@ -14,7 +14,7 @@ export default async function StaffPage(props: PageProps<"/staff">) {
   if (!actor) redirect("/demo-login?next=/staff");
   const q = typeof sp.q === "string" ? sp.q.trim().toUpperCase() : "";
   const desk = await listFacilityAppointments(actor, { referenceQuery: q });
-  if (!desk) redirect("/dashboard");
+  if (!desk) redirect(actor.role === "patient" ? "/dashboard" : "/account?mode=access"); // pending facility accounts: approval popup
   const { facility, appointments: appts } = desk;
 
   return (

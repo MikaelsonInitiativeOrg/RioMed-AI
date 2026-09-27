@@ -23,7 +23,8 @@ The whole demo journey works locally: prompt → validated intent → ranked fac
 | Paystack init, verify, webhook | FR-050 to FR-056 | 1 | code done, **untested against Paystack** | – | tests/core/payments (signature and verify) | – | – |
 | Results vault (DB-stored, signed links) | FR-060 to FR-066 | 1 | done (demo variant) | – | e2e smoke | – | – |
 | Access control | SEC-007, 11.4 | 1 | done | – | tests/core/access | – | – |
-| Demo sign-in | FR-001 to FR-003 (stub) | 1 | done (stub) | – | – | – | – |
+| Demo sign-in | FR-001 to FR-003 (stub) | 1 | done (stub, demo accounts only) | – | – | – | – |
+| Accounts from the search box: username, password, PIN; facility approval | FR-008 | 3* | done (backend, popup, operator page) | – | tests/core/account-intent, credentials (pending); scripts/accounts-smoke.ts (15 checks, implementer-written) | – | – |
 | Live nearby places (Google Maps via Gemini) | FR-027 | 2 | done (backend, API and component); **home-page wiring is with the frontend agent** | – | tests/core/live-places (pending) | – | – |
 | No tests from symptoms guard | FR-017 | 2 | done | – | tests/core/support, ai (pending) | – | – |
 | Payouts | FR-059 to FR-059g | 3 | not started (out of scope today) | – | – | – | – |
@@ -61,6 +62,8 @@ Least confident about:
 - **SQLite and Postgres** differ in how concurrent transactions behave. The capacity guard is a single conditional UPDATE, which is atomic on both, but the race test has only been run on SQLite.
 
 ## Known divergences from the PRD
+
+- FR-008 accounts are tier 3 (auth). For the hackathon they hold synthetic data only. Still missing before real use: a second independent review, a per-IP login rate limit (only per-account lockout exists), password reset, and moving the search form from GET to POST. A password typed into search reaches the server URL once before the proxy redirects it away.
 
 | What | PRD says | Code does | Why | Resolution by |
 |---|---|---|---|---|

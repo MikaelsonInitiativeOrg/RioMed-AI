@@ -29,6 +29,12 @@ Maps grounding. Only the places Google Maps returns are shown, never the model's
 are labelled unverified, can't be booked, and carry Google Maps attribution. Live search works
 for areas RioMed doesn't cover yet, for example Ikorodu.
 
+**Accounts from the search box:**
+- Type "create an account" (or "register my clinic") and a sign-up popup asks for a username, password and PIN.
+- Type "access dashboard" and the popup asks for your PIN on a device you've used before, or your password on a new one.
+- Facility accounts wait for operator approval on `/operator` before they can see any bookings.
+- Passwords and PINs never go through search or the AI. If you type one into search, you get a warning instead.
+
 **Evaluation:** 120 hand-labelled prompts in [backend/eval/intents.jsonl](backend/eval/intents.jsonl).
 Latest run with `gemini-3.5-flash-lite`, shown on `/about`:
 
@@ -75,6 +81,7 @@ AI_PROVIDER=ollama AI_MODEL=<model> AI_BASE_URL=http://localhost:11434/v1
 ```sh
 npm test        # 648 contract tests for backend/src/core
 npm run smoke   # booking race, payment, access, upload, late-payment refund (local DB)
+npm run smoke:accounts -w @riomed/backend   # sign-up, password, PIN, lockout, facility approval
 npm run eval    # AI-010 evaluation
 npm run typecheck && npm run lint && npm run build
 ```

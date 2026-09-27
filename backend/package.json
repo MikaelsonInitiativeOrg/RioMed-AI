@@ -6,7 +6,8 @@
     "./core/intent": "./src/core/intent/index.ts",
     "./core/*": "./src/core/*.ts",
     "./server/*": "./src/server/*.ts",
-    "./eval/report.json": "./eval/report.json"
+    "./eval/report.json": "./eval/report.json",
+    "./core/credentials": "./src/core/credentials.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -15,7 +16,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "smoke": "tsx --conditions=react-server scripts/e2e-smoke.ts"
+    "smoke": "tsx --conditions=react-server scripts/e2e-smoke.ts",
+    "smoke:accounts": "tsx --conditions=react-server scripts/accounts-smoke.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -116,10 +116,11 @@ async function main() {
 
   await prisma.user.createMany({
     data: [
-      { id: "usr_patient_ada", name: "Ada (demo patient)", role: "patient" },
-      { id: "usr_patient_tunde", name: "Tunde (demo patient)", role: "patient" },
-      { id: "usr_staff_alausa", name: "Staff, Alausa Diagnostics (demo)", role: "facility_staff", facilityId: "fac_001" },
-      { id: "usr_staff_yaba", name: "Staff, Yaba Central Laboratory (demo)", role: "facility_staff", facilityId: "fac_008" },
+      { id: "usr_patient_ada", name: "Ada (demo patient)", role: "patient", isDemo: true },
+      { id: "usr_patient_tunde", name: "Tunde (demo patient)", role: "patient", isDemo: true },
+      { id: "usr_staff_alausa", name: "Staff, Alausa Diagnostics (demo)", role: "facility_staff", facilityId: "fac_001", isDemo: true },
+      { id: "usr_staff_yaba", name: "Staff, Yaba Central Laboratory (demo)", role: "facility_staff", facilityId: "fac_008", isDemo: true },
+      { id: "usr_operator", name: "RioMed operator (demo)", role: "operator", isDemo: true },
     ],
   });
 

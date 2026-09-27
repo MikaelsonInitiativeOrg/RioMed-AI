@@ -10,11 +10,15 @@ import { expireStaleHolds, audit } from "./booking";
  */
 
 export async function listDemoUsers() {
-  return prisma.user.findMany({ orderBy: { role: "asc" }, select: { id: true, name: true, role: true } });
+  return prisma.user.findMany({ where: { isDemo: true }, orderBy: { role: "asc" }, select: { id: true, name: true, role: true } });
 }
 
+/** Session lookup. A facility account that isn't approved yet gets NO facilityId, so every
+ *  facility-scoped permission is denied until an operator approves it. */
 export async function findUser(userId: string) {
-  return prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, role: true, facilityId: true } });
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, role: true, facilityId: true, status: true, isDemo: true } });
+  if (!u || u.status === "rejected") return null;
+  return { ...u, facilityId: u.status === "active" ? u.facilityId : null, pending: u.status === "pending" };
 }
 
 export async function getFacilityBooking(facilityId: string, now = new Date()) {
