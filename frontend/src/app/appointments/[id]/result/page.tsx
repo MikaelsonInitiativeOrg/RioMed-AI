@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function ResultViewerPage(props: PageProps<"/appointments/[id]/result">) {
   const { id } = await props.params;
   const actor = await getSessionUser();
-  if (!actor) redirect(`/demo-login?next=/appointments/${id}/result`);
+  if (!actor) redirect(`/account?mode=access&next=/appointments/${id}/result`);
 
   const a = await getAppointmentForActor(actor, id);
   if (!a) notFound();

@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AuditPage(props: PageProps<"/audit">) {
   const sp = await props.searchParams;
   const actor = await getSessionUser();
-  if (!actor) redirect("/demo-login?next=/audit");
+  if (!actor) redirect("/account?mode=access&next=/audit");
 
   const filterRef = typeof sp.ref === "string" ? sp.ref.toUpperCase() : "";
 

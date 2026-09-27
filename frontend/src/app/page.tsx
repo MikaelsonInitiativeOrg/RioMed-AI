@@ -7,6 +7,7 @@ import { FacilityCard } from "@/components/FacilityCard";
 import { EmptyState } from "@/components/EmptyState";
 import { LiveNearby } from "@/components/LiveNearby";
 import { NearMeButton } from "@/components/NearMeButton";
+import { PromptBookCard } from "@/components/PromptBookCard";
 import { RioMedLogo } from "@/components/Logo";
 import { redirect } from "next/navigation";
 import { detectAccountIntent, looksLikeCredential, wantsNearMe } from "@riomed/backend/core/intent/account";
@@ -31,7 +32,7 @@ export default async function Home(props: PageProps<"/">) {
   const sp = await props.searchParams;
   const q = one(sp.q)?.trim() ?? "";
   const area = one(sp.area);
-  // Set only after the user taps "Use my location" (NearMeButton).
+  // Set from ?lat=&lng= after NearMeButton's automatic browser request (tap is the retry fallback).
   const deviceOrigin = parseDeviceOrigin(one(sp.lat), one(sp.lng));
   let view: (Found & { intent: SearchIntent } & Partial<Pick<SearchView, "ai" | "emergency" | "totalMs">>) | null = null;
   let error: string | null = null;
@@ -79,6 +80,11 @@ export default async function Home(props: PageProps<"/">) {
             <p className="max-w-[460px] text-sm sm:text-[15px] text-[#4B6560] leading-relaxed -mt-1">
               Describe the test or care you&apos;re looking for, in plain language. RioMed helps you find, book and pay — it never diagnoses.
             </p>
+
+            {/* Primary Search Input with Animated Search Button */}
+            <div className="w-full max-w-xl mx-auto my-1">
+              <HomeComposer initialQuery={q} />
+            </div>
 
             {/* Suggestion Pills */}
             <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg mt-1">
@@ -222,7 +228,7 @@ export default async function Home(props: PageProps<"/">) {
                   <div className="rounded-2xl border border-[#C98A1D]/30 bg-[#FFF4E5] p-4 text-sm text-[#8A6212]">
                     <p className="font-bold">Where are you?</p>
                     <p className="mt-1 mb-3">
-                      Share your location to see hospitals, clinics and health centres near you, or choose an area above.
+                      Allow location to see hospitals, clinics and health centres near you, or choose an area above.
                     </p>
                     <NearMeButton query={q} />
                   </div>
@@ -232,6 +238,9 @@ export default async function Home(props: PageProps<"/">) {
                     RioMed has no partner facilities in {view.intent.locationQuery} yet, so booking isn&apos;t available there. Here are places from Google Maps you can contact.
                   </p>
                 )}
+
+                {/* Book-for-me from a prompt that names a clinic (hold; pay on the appointment page) */}
+                {q && !view.emergency?.isEmergency && <PromptBookCard query={q} />}
 
                 {/* Facilities List */}
                 {view.place && (
@@ -293,7 +302,7 @@ export default async function Home(props: PageProps<"/">) {
 
       {/* ================= COMPOSER (STICKY AT BOTTOM) ================= */}
       <footer className="w-full max-w-3xl mx-auto pt-4 shrink-0">
-        <HomeComposer initialQuery={q} />
+        {view && <HomeComposer initialQuery={q} />}
 
         {/* Required Medical Disclaimer from screenshot & PRD AI-022 */}
         <p className="text-center text-xs sm:text-xs text-[#4B6560] mt-2 mb-1">

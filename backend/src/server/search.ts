@@ -22,7 +22,7 @@ export interface SearchView {
 /** Structured search: used directly by the form (FR-025) and after the prompt is parsed. */
 export type Found = Pick<SearchView, "place" | "window" | "results" | "radiusKm" | "widened">;
 
-/** Device location from "Use my location": rounded to ~100 m, used only for this request. */
+/** Device location from the automatic "Use my location" request: rounded to ~100 m, used only for this request. */
 export function parseDeviceOrigin(lat: unknown, lng: unknown): LatLng | null {
   const la = Number(lat);
   const ln = Number(lng);

@@ -62,13 +62,12 @@ npm run db:push && npm run db:seed
 npm run dev                                    # http://localhost:3000
 ```
 
-On the site, use **Demo sign-in** to act as a patient (Ada or Tunde) or as facility staff
-(Alausa or Yaba).
+On the site, create an account from the search box (type "create an account") or the **Sign in** link, then use it everywhere.
 
-**Demo journey:**
+**Demo journey (needs a patient account and a facility account approved on `/operator`):**
 1. Search.
 2. Tap **See times**, pick a slot, and pay.
-3. Sign in as *Staff, Alausa Diagnostics*. Check the patient in and upload a PDF.
+3. Sign in with the facility account. Check the patient in and upload a PDF.
 4. Sign back in as the patient and open the result.
 
 **Real AI** (explicit opt-in; keys stay server-side):
@@ -81,7 +80,7 @@ AI_PROVIDER=ollama AI_MODEL=<model> AI_BASE_URL=http://localhost:11434/v1
 ## Checks
 
 ```sh
-npm test        # 648 contract tests for backend/src/core
+npm test        # 892 tests for backend/src/core (+ server read paths)
 npm run smoke   # booking race, payment, access, upload, late-payment refund (local DB)
 npm run smoke:accounts -w @riomed/backend   # sign-up, password, PIN, lockout, facility approval
 npm run eval    # AI-010 evaluation

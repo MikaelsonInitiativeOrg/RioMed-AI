@@ -1,17 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
- * "Use my location": asks the browser for the device position only when tapped, then reloads the
- * search with lat/lng. The position is rounded on the server (~100 m), used for this search and the
- * live Google Maps lookup, and never stored.
+ * "Use my location": requests the device position automatically on mount (with
+ * tap-to-retry fallback), then reloads the search with lat/lng. The position is
+ * rounded on the server (~100 m), used for this search and the live Google Maps
+ * lookup, and never stored.
  */
-export function NearMeButton({ query }: { query: string }) {
+export function NearMeButton({ query, auto = true }: { query: string; auto?: boolean }) {
   const router = useRouter();
   const [state, setState] = useState<"idle" | "locating" | "error">("idle");
   const [message, setMessage] = useState("");
+  const autoTried = useRef(false);
 
   function locate() {
     if (!("geolocation" in navigator)) {
@@ -39,6 +41,16 @@ export function NearMeButton({ query }: { query: string }) {
     );
   }
 
+  // Automatic request on mount so no tap is needed. Guarded to run once
+  // (StrictMode double-effect) and never retries by itself on denial.
+  useEffect(() => {
+    if (auto && !autoTried.current) {
+      autoTried.current = true;
+      locate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto]);
+
   return (
     <div className="space-y-2">
       <button
@@ -51,7 +63,7 @@ export function NearMeButton({ query }: { query: string }) {
         {state === "locating" ? "Finding your location…" : "Use my location"}
       </button>
       <p className="text-xs text-[#4B6560]">
-        Your location is only used for this search and to find places on Google Maps. It&apos;s rounded to about 100 m and never saved.
+        Your browser asks before sharing your location. It&apos;s rounded to about 100 m, used only for this search and the Google Maps lookup, and never saved. Your name and account are never sent to Google.
       </p>
       {state === "error" && (
         <p role="alert" className="text-sm text-[#8A251C]">

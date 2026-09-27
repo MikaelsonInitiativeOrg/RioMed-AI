@@ -70,6 +70,7 @@ export async function getAppointmentForActor(actor: Actor | null, appointmentId:
     holdExpiresAt: a.holdExpiresAt,
     facility: { id: a.facilityId, name: a.facility.name, address: a.facility.address },
     slotStart: a.slot.start,
+    slotEnd: a.slot.end,
     paidWith: paid ? (paid.provider as "paystack" | "simulated") : null,
     isOwner: actor?.role === "patient" && actor.userId === a.patientUserId,
     results: can(actor, "result:view", subject)

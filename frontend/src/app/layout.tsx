@@ -98,13 +98,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   </Link>
 
                   <Link
-                    href="/demo-login"
-                    className="hidden sm:inline-flex min-h-[44px] items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-[#4B6560] hover:text-[#0A5347] hover:bg-[#F3FAF8] transition"
-                  >
-                    Demo
-                  </Link>
-
-                  <Link
                     href="/account?mode=access"
                     className="inline-flex min-h-[44px] items-center rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold text-[#0E6B5C] bg-[#F3FAF8] border border-[#0E6B5C]/20 hover:bg-[#CDE8E1]/50 transition max-w-[90px] sm:max-w-[140px] truncate"
                     title={displayName ?? "Sign in or create an account"}

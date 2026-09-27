@@ -1,5 +1,7 @@
 import { TEST_CATALOG, getTest } from "@riomed/backend/core/catalog";
 import { PLACES } from "@riomed/backend/core/geo";
+import { Search } from "lucide-react";
+import { BorderBeam } from "@/components/ui/border-beam-search";
 
 interface SearchRefineProps {
   test?: string;
@@ -147,12 +149,22 @@ export function SearchRefine({ test, area, day, part, title }: SearchRefineProps
       </div>
 
       <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
-        <button
-          type="submit"
-          className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#0E6B5C] px-5 py-2.5 text-xs sm:text-sm font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] active:scale-[0.98] transition"
+        <BorderBeam
+          size="line"
+          colorVariant="colorful"
+          duration={3.1}
+          borderRadius={14}
+          theme="dark"
+          className="inline-flex self-end rounded-xl overflow-hidden"
         >
-          Update results
-        </button>
+          <button
+            type="submit"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#0E6B5C] px-5 py-2.5 text-xs sm:text-sm font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] active:scale-[0.98] transition cursor-pointer"
+          >
+            <Search className="w-4 h-4 shrink-0" strokeWidth={2.4} aria-hidden="true" />
+            Update results
+          </button>
+        </BorderBeam>
       </div>
     </form>
   );

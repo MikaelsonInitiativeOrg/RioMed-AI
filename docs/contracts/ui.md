@@ -38,13 +38,13 @@ This is the boundary between the **frontend** (UI design, owned by the frontend 
 
 | Route | File | Data | Actions and links |
 | --- | --- | --- | --- |
-| `/` | `app/page.tsx` | `runPromptSearch(q)` for `?q=`, or `searchWithIntent(intent)` for `?area=&test=&day=&part=`, both from `server/search`. They return `SearchView`: `ai`, `emergency`, `intent`, `place`, `window`, `results[]`, `radiusKm`, `widened`, `totalMs` | GET forms only. The refine form (`components/SearchRefine`) submits `test`, `area`, `day`, `part`. "See times" links to `/facility/[id]?test=&from=&to=` |
+| `/` | `app/page.tsx` | `runPromptSearch(q)` for `?q=`, or `searchWithIntent(intent)` for `?area=&test=&day=&part=`, both from `server/search`. They return `SearchView`: `ai`, `emergency`, `intent`, `place`, `window`, `results[]`, `radiusKm`, `widened`, `totalMs` | GET forms only. The refine form (`components/SearchRefine`) submits `test`, `area`, `day`, `part`. "See times" links to `/facility/[id]?test=&from=&to=`. `components/PromptBookCard` (server) previews `previewPromptBook(q)` from `server/promptBook` and its buttons post `promptBookAction` (fields `q`, `slotId`) to hold a slot from the prompt |
 | `/facility/[id]` | `app/facility/[id]/page.tsx` | `getFacilityBooking(id)` from `server/queries` returns `{ facility, tests[], slots[{ id, start, end, remaining }] }` or null | `holdAction` with fields `slotId`, `testCode`, `back`. Errors come back as `?error=` |
-| `/appointments/[id]` | `app/appointments/[id]/page.tsx` | `getAppointmentForActor(actor, id)` returns `{ reference, status, testCode, amountKobo, holdExpiresAt, facility, slotStart, paidWith, isOwner, results[] }` or null (render 404) | `payAction` and `cancelAction` (field `appointmentId`). Result links use `resultLink(result.id)` from `server/auth` |
+| `/appointments/[id]` | `app/appointments/[id]/page.tsx` | `getAppointmentForActor(actor, id)` returns `{ reference, status, testCode, amountKobo, holdExpiresAt, facility, slotStart, slotEnd, paidWith, isOwner, results[] }` or null (render 404) | `payAction` and `cancelAction` (field `appointmentId`). Result links use `resultLink(result.id)` from `server/auth`. `components/AddToCalendar` (client) builds a Google Calendar link and a downloadable .ics from the booking's reference, facility, test and slot times |
 | `/pay/simulated` | `app/pay/simulated/page.tsx` | `getSimulatedPayment(actor, reference)` | `simulatedPayAction` (field `reference`) |
 | `/dashboard` | `app/dashboard/page.tsx` | `listPatientAppointments(actor)` returns `[{ id, reference, status, testCode, amountKobo, facilityName, slotStart, hasResult }]` | Links to appointments |
 | `/staff` | `app/staff/page.tsx` | `listFacilityAppointments(actor, { referenceQuery })` returns `{ facility, appointments[{ id, reference, status, testCode, slotStart, patientName, resultCount }] }` or null (redirect away) | `checkInAction` (`appointmentId`) and `uploadResultAction` (`appointmentId`, `file`: PDF of 4 MB or less) |
-| `/demo-login` | `app/demo-login/page.tsx` | `listDemoUsers()` | `signInAction` (`userId`, `next`) and `signOutAction` |
+| `/account` | `app/account/page.tsx` | `getSessionUser()`, `getDeviceUserId()`, `getDeviceUserSummary(deviceUserId)`, `listSignupFacilities()` | `signUpAction`, `passwordLoginAction`, `pinUnlockAction`, `forgetDeviceAction` (field `next` returns here after sign-in). All signed-out redirects point here with `?mode=access&next=…` |
 | `/about` | `app/about/page.tsx` | `getEvalReport()` from `server/evalReport` | – |
 
 - **Signed-in user:** `getSessionUser()` from `@/lib/session` returns `{ userId, role, facilityId, name }` or null.
@@ -94,7 +94,7 @@ This is the boundary between the **frontend** (UI design, owned by the frontend 
 - **`getSessionUser()`** now also returns `pending: boolean`. A pending facility account is
   signed in, but has no facility access.
 - **Nav request:** add a "Sign in / Create account" link that points to `/account?mode=access`
-  and `/account?mode=signup`. Keep "Demo sign-in" too.
+  and `/account?mode=signup`.
 
 ## Backend-owned files inside `frontend/` (do not change behaviour)
 

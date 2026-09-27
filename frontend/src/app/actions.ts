@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { findUser } from "@riomed/backend/server/queries";
 import { BookingError, cancelByPatient, checkIn, holdSlot, uploadResult } from "@riomed/backend/server/booking";
+import { promptBook } from "@riomed/backend/server/promptBook";
 import { completePayment, startPayment } from "@riomed/backend/server/payments";
 import { clearSession, forgetDevice, getDeviceUserId, getSessionUser, rememberDevice, setSessionUser } from "@/lib/session";
 import { decideFacilityAccount, loginWithPassword, signUp, unlockWithPin, type AccountResult } from "@riomed/backend/server/accounts";
@@ -11,17 +11,6 @@ import { decideFacilityAccount, loginWithPassword, signUp, unlockWithPin, type A
 function safeNext(next: FormDataEntryValue | null): string {
   const n = typeof next === "string" ? next : "/";
   return n.startsWith("/") && !n.startsWith("//") ? n : "/";
-}
-
-export async function signInAction(formData: FormData) {
-  const userId = String(formData.get("userId") ?? "");
-  const user = await findUser(userId);
-  if (!user) redirect("/demo-login?error=unknown");
-  if (!user.isDemo) redirect("/demo-login?error=unknown"); // real accounts sign in with a password
-  await setSessionUser(user.id, { demo: true });
-  const fallback = user.role === "patient" ? "/dashboard" : "/staff";
-  const next = safeNext(formData.get("next"));
-  redirect(next === "/" ? fallback : next);
 }
 
 export async function signOutAction() {
@@ -34,13 +23,30 @@ export async function holdAction(formData: FormData) {
   const slotId = String(formData.get("slotId") ?? "");
   const testCode = String(formData.get("testCode") ?? "");
   const back = safeNext(formData.get("back"));
-  if (!actor) redirect(`/demo-login?next=${encodeURIComponent(back)}`);
+  if (!actor) redirect(`/account?mode=access&next=${encodeURIComponent(back)}`);
   let id: string;
   try {
     id = (await holdSlot(actor, { slotId, testCode })).id;
   } catch (e) {
     const msg = e instanceof BookingError ? e.message : "Something went wrong. Please try again.";
     redirect(`${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}`);
+  }
+  redirect(`/appointments/${id}`);
+}
+
+/** Book from a prompt that names a clinic. Anonymous users sign in first, then retry. */
+export async function promptBookAction(formData: FormData) {
+  const actor = await getSessionUser();
+  const q = String(formData.get("q") ?? "");
+  const slotId = String(formData.get("slotId") ?? "") || undefined;
+  const back = `/?q=${encodeURIComponent(q)}`;
+  if (!actor) redirect(`/account?mode=access&next=${encodeURIComponent(back)}`);
+  let id: string;
+  try {
+    id = (await promptBook(actor, q, slotId)).appointmentId;
+  } catch (e) {
+    const msg = e instanceof BookingError ? e.message : "Something went wrong. Please try again.";
+    redirect(`${back}&error=${encodeURIComponent(msg)}`);
   }
   redirect(`/appointments/${id}`);
 }

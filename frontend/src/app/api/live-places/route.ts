@@ -19,7 +19,7 @@ function allowed(ip: string): boolean {
 }
 
 /** GET /api/live-places?address=…[&lat=…&lng=…] → { status, places[{ placeId, name, mapsUrl }], reason? }
- *  lat/lng come only from the user's "Use my location" tap; rounded to ~100 m, never stored or logged. */
+ *  lat/lng come from the automatic "Use my location" request; rounded to ~100 m, never stored or logged. */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const address = params.get("address") ?? "";

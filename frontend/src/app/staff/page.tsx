@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function StaffPage(props: PageProps<"/staff">) {
   const sp = await props.searchParams;
   const actor = await getSessionUser();
-  if (!actor) redirect("/demo-login?next=/staff");
+  if (!actor) redirect("/account?mode=access&next=/staff");
   const q = typeof sp.q === "string" ? sp.q.trim().toUpperCase() : "";
   const desk = await listFacilityAppointments(actor, { referenceQuery: q });
   if (!desk) redirect(actor.role === "patient" ? "/dashboard" : "/account?mode=access"); // pending facility accounts: approval popup

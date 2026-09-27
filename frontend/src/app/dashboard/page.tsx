@@ -1,14 +1,14 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { listPatientAppointments } from "@riomed/backend/server/queries";
 import { getSessionUser } from "@/lib/session";
 import { PatientDashboardTabs } from "@/components/PatientDashboardTabs";
+import { signOutAction } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
   const actor = await getSessionUser();
-  if (!actor) redirect("/demo-login?next=/dashboard");
+  if (!actor) redirect("/account?mode=access&next=/dashboard");
   if (actor.role !== "patient") redirect("/staff");
   const appts = await listPatientAppointments(actor);
 
@@ -30,12 +30,14 @@ export default async function Dashboard() {
           <p className="font-heading font-bold text-xs text-[#12262B]">
             {actor.name}
           </p>
-          <Link
-            href="/demo-login?next=/dashboard"
-            className="text-xs text-[#0E6B5C] hover:underline"
-          >
-            Switch profile
-          </Link>
+          <form action={signOutAction}>
+            <button
+              type="submit"
+              className="text-xs text-[#0E6B5C] hover:underline"
+            >
+              Sign out
+            </button>
+          </form>
         </div>
       </div>
 

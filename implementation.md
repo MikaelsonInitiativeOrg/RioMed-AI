@@ -6,7 +6,7 @@ Stakes tier: tier 1 for the hackathon demo (synthetic data, test-mode payments),
 
 ## Summary
 
-The whole demo journey works locally: prompt → validated intent → ranked facilities → hold → payment (simulated or Paystack test) → check-in → PDF result → patient view. The core has 648 contract tests, written independently, and all pass. Not done yet: hosted deployment (needs a Postgres URL and Vercel), a live LLM evaluation (needs an API key), and Paystack test keys.
+The whole demo journey works locally: prompt → validated intent → ranked facilities → hold → payment (simulated or Paystack test) → check-in → PDF result → patient view. The core has 892 tests, written independently except the 6 facility-match tests, and all pass. Not done yet: hosted deployment (needs a Postgres URL and Vercel), a live LLM evaluation (needs an API key), and Paystack test keys.
 
 ## Component status
 
@@ -23,10 +23,11 @@ The whole demo journey works locally: prompt → validated intent → ranked fac
 | Paystack init, verify, webhook | FR-050 to FR-056 | 1 | code done, **untested against Paystack** | – | tests/core/payments (signature and verify) | – | – |
 | Results vault (DB-stored, signed links) | FR-060 to FR-066 | 1 | done (demo variant) | – | e2e smoke | – | – |
 | Access control | SEC-007, 11.4 | 1 | done | – | tests/core/access | – | – |
-| Demo sign-in | FR-001 to FR-003 (stub) | 1 | done (stub, demo accounts only) | – | – | – | – |
+| Demo sign-in | FR-001 to FR-003 (stub) | 1 | removed 2026-09-27; `/demo-login` deleted and every signed-out redirect points to `/account?mode=access&next=…`. Real username/password/PIN accounts are the only path | – | – | – | – |
 | Accounts from the search box: username, password, PIN; facility approval | FR-008 | 3* | done (backend, popup, operator page) | – | tests/core/account-intent, credentials (pending); scripts/accounts-smoke.ts (15 checks, implementer-written) | – | – |
 | Live nearby places (Google Maps via Gemini) | FR-027 | 2 | done (backend, API and component); **home-page wiring is with the frontend agent** | – | tests/core/live-places (pending) | – | – |
 | No tests from symptoms guard | FR-017 | 2 | done | – | tests/core/support, ai (pending) | – | – |
+| Prompt-to-book (name a clinic, hold a slot) + add-to-calendar | beyond PRD (booking surface) | 1 | done (matcher 6 tests; preview verified read-only against Neon; hold itself reuses holdSlot) | – | tests/core/facility-match (implementer-written, N2 caveat) | – | – |
 | Payouts | FR-059 to FR-059g | 3 | not started (out of scope today) | – | – | – | – |
 
 *Emergency detection is safety-relevant, so it is treated as tier 3 even in the demo. It has 42 independent tests and a fail-safe wrapper.
@@ -74,6 +75,7 @@ Least confident about:
 | Hold expiry | Scheduled job | Lazy expiry on every booking, payment and page read | No cron today | Post-hackathon |
 | Non-operational facilities | Q8 open (hide or label) | Hidden | Decided for the demo | Q8 |
 | Local AI base URL | – | `AI_BASE_URL` required for ollama and lmstudio (no default) | Contract, found by the test author | Final |
+| Location request | Requested only on tap (FR-027g, pre-2026-09-27) | Requested automatically on mount; tap is retry fallback. PRD FR-027(f)+(g) updated 2026-09-27 to match | Operator request 2026-09-27 | Done (PRD + notice updated) |
 
 ## Decisions log
 

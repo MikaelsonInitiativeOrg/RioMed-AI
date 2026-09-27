@@ -10,6 +10,7 @@ import { paystackEnabled } from "@riomed/backend/server/paystack";
 import { getSessionUser } from "@/lib/session";
 import { StatusBadge } from "@/components/StatusBadge";
 import { HoldCountdown } from "@/components/HoldCountdown";
+import { AddToCalendar } from "@/components/AddToCalendar";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
   const { id } = await props.params;
   const sp = await props.searchParams;
   const actor = await getSessionUser();
-  if (!actor) redirect(`/demo-login?next=/appointments/${id}`);
+  if (!actor) redirect(`/account?mode=access&next=/appointments/${id}`);
   const a = await getAppointmentForActor(actor, id);
   if (!a) notFound(); // not found or not allowed: don't reveal which
   const unpaid = a.status === "HELD" || a.status === "PENDING_PAYMENT";
@@ -153,6 +154,19 @@ export default async function AppointmentPage(props: PageProps<"/appointments/[i
             The clinic receptionist will verify reference <strong className="font-mono text-[#0A5347]">{a.reference}</strong> and check you in. Results will be uploaded directly to your RioMed account.
           </p>
         </div>
+      )}
+
+      {/* Add to calendar (useless once the booking is dead) */}
+      {!["EXPIRED", "CANCELLED_BY_PATIENT", "CANCELLED_BY_FACILITY", "NO_SHOW", "REFUNDED"].includes(a.status) && (
+        <AddToCalendar
+          reference={a.reference}
+          facilityName={a.facility.name}
+          address={a.facility.address}
+          testName={getTest(a.testCode)?.name ?? a.testCode}
+          startISO={a.slotStart.toISOString()}
+          endISO={a.slotEnd.toISOString()}
+          tentative={a.status === "HELD" || a.status === "PENDING_PAYMENT"}
+        />
       )}
 
       {/* Results Vault Section */}

@@ -12,7 +12,7 @@ const FASTING = new Set(["FBS", "LIPID"]);
 
 export default async function StaffCataloguePage() {
   const actor = await getSessionUser();
-  if (!actor) redirect("/demo-login?next=/staff/catalogue");
+  if (!actor) redirect("/account?mode=access&next=/staff/catalogue");
   const catalogue = await getFacilityCatalogue(actor);
   if (!catalogue) redirect(actor.role === "patient" ? "/dashboard" : "/account?mode=access");
   const { facility } = catalogue;

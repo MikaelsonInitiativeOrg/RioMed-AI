@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { signOutAction } from "@/app/actions";
 
 /**
  * Frame for the facility desk pages. On phones the sidebar collapses to a header with a row of
@@ -56,9 +57,11 @@ export function FacilityShell({
 
         <div className="mt-3 md:mt-6 md:pt-6 md:border-t md:border-white/10 text-xs text-[#CDE8E1] flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="truncate">Signed in: {operatorName}</span>
-          <Link href="/demo-login" className="inline-flex min-h-[44px] items-center underline hover:text-white">
-            Switch profile
-          </Link>
+          <form action={signOutAction}>
+            <button type="submit" className="inline-flex min-h-[44px] items-center underline hover:text-white">
+              Sign out
+            </button>
+          </form>
         </div>
       </aside>
 

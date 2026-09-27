@@ -73,6 +73,22 @@ Oshodi, Yaba, Akoka, Ebute Metta, Surulere, Mushin, Ilupeju, Gbagada, Ketu, Ojot
 Lekki, Ajah, Victoria Island, Ikoyi, Lagos Island, Obalende, Festac and Lagos (kind `state`).
 All coordinates lie inside the bounding box lat 6.3–6.8, lng 3.0–3.8.
 
+## `@/core/facility` (added 2026-09-27)
+
+```ts
+export interface NamedFacility { id: string; name: string }
+export function findFacilityCandidates(text: string, facilities: readonly NamedFacility[]): NamedFacility[];
+export function matchFacilityByName(text: string, facilities: readonly NamedFacility[]): NamedFacility | null;
+```
+
+- Full facility names match as whole phrases (longest wins), exactly like `resolveLocation`.
+- A single name word only counts when the text also names a kind of building
+  (`hospital`, `clinic`, `lab`, `diagnostics`, `centre`, …), so "malaria test in
+  Ikeja" matches no facility while "Opebi clinic" matches Opebi Family Clinic.
+  Generic words (`clinic`, `hospital`, `diagnostics`, …) never match alone.
+- `matchFacilityByName` returns the single candidate, or null when none or
+  several match (the caller then asks the user to pick). Never throws.
+
 ## `@/core/intent`
 
 ```ts

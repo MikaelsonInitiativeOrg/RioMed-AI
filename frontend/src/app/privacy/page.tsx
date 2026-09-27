@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PrivacyPage() {
   const actor = await getSessionUser();
-  if (!actor) redirect("/demo-login?next=/privacy");
+  if (!actor) redirect("/account?mode=access&next=/privacy");
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6 py-4 sm:py-6 pb-16">
