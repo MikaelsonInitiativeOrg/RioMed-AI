@@ -152,7 +152,7 @@ Examples:
 
 - **`tests`:** catalogue codes found through synonyms, whole-word and case-insensitive, in order
   of first appearance, with no duplicates. Where two synonyms overlap, the longer match wins.
-- **`locationQuery`:** the canonical `name` from `resolveLocation(text)`, or `null`.
+- **`locationQuery`:** the canonical `name` from `resolveLocation(text)`. Otherwise (universal location, 2026-09-27) the place phrase after "in", "near", "around" or "close to", exactly as written, cut before time words ("malaria test in Abuja tomorrow" gives `"Abuja"`). Lower-case phrases count only when a test or facility word is present. Phrases starting with a possessive or article ("in my stomach", "in the morning") and "near me" give `null`. The server geocodes it, and the parser never outputs coordinates.
 - **`when.day`:**
   - "today", "tomorrow" or a weekday name ("monday" to "sunday") found in the text.
   - "tonight" means day "today" with part "evening".
@@ -471,3 +471,12 @@ export const LOCK_MINUTES: 15;
   "0123456789012345" (for example 1234, 7890, 890123) or "9876543210987654" (for example 4321,
   0987).
 - Non-string input gives `{ ok: false }`. None of these functions throw.
+
+## `@/core/facilityRegistration` (added 2026-09-27, FR-008e)
+
+- `checkFacilityRegistration({ name, type, address, phone, prices })` returns `{ ok: true, value }` or `{ ok: false, error }`.
+  - `name`: 3–80 characters after cleaning. `address`: 5–160 characters. Control characters and `<>` are removed.
+  - `type`: one of `FACILITY_TYPES`.
+  - `phone`: optional, 7–20 characters of digits, spaces, `+()-`.
+  - `prices`: ticked test code → naira as typed (commas and ₦ allowed). Unknown codes are ignored. Each price must be ₦100–₦1,000,000 and is stored as whole-naira kobo. At least one test is required.
+- `buildOpeningSlots(facilityId, type, now)`: hourly slots for `SCHEDULE_DAYS` (14) days from today, `OPEN_HOUR`–`CLOSE_HOUR` (08–18) on the WAT clock. Only future starts. Closed Sundays unless `type` is `hospital`. Capacity `SLOT_CAPACITY` (2). Ids are deterministic and unique.

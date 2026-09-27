@@ -42,6 +42,7 @@ export async function getFacilityBooking(facilityId: string, now = new Date()) {
       nhfrId: facility.nhfrId,
       isPartner: facility.isPartner,
       sourceSyncedAt: facility.sourceSyncedAt,
+      source: facility.source,
     },
     tests: facility.tests.map((t) => ({ testCode: t.testCode, priceKobo: t.priceKobo, turnaroundHours: t.turnaroundHours })),
     slots: slots

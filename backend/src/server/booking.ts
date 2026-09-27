@@ -82,7 +82,7 @@ export async function holdSlot(actor: Actor | null, input: { slotId: string; tes
         holdExpiresAt: new Date(now.getTime() + HOLD_MINUTES * 60_000),
       },
     });
-  });
+  }, { timeout: 10_000, maxWait: 5_000 }); // room for a slow link to the database
 }
 
 export type ConfirmOutcome = "CONFIRMED" | "ALREADY_CONFIRMED" | "REFUND_REQUIRED" | "NOT_FOUND";

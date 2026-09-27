@@ -11,11 +11,12 @@ import { useEffect, useRef, useState } from "react";
  */
 export function NearMeButton({ query, auto = true }: { query: string; auto?: boolean }) {
   const router = useRouter();
-  const [state, setState] = useState<"idle" | "locating" | "error">("idle");
+  const [state, setState] = useState<"idle" | "locating" | "ready" | "error">("idle");
+  const [found, setFound] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const autoTried = useRef(false);
 
-  function locate() {
+  function locate(fromAuto = false) {
     if (!("geolocation" in navigator)) {
       setState("error");
       setMessage("This browser can't share your location. Choose an area instead.");
@@ -27,7 +28,16 @@ export function NearMeButton({ query, auto = true }: { query: string; auto?: boo
         const lat = pos.coords.latitude.toFixed(3);
         const lng = pos.coords.longitude.toFixed(3);
         const q = query.trim() || "hospitals, clinics and health centres near me";
-        router.push(`/?q=${encodeURIComponent(q)}&lat=${lat}&lng=${lng}`);
+        const href = `/?q=${encodeURIComponent(q)}&lat=${lat}&lng=${lng}`;
+        // Never pull someone away mid-typing: an automatic fix waits for a tap instead.
+        const el = document.activeElement;
+        const typing = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el.value.trim().length > 0 : false;
+        if (fromAuto && typing) {
+          setFound(href);
+          setState("ready");
+          return;
+        }
+        router.push(href);
       },
       (err) => {
         setState("error");
@@ -46,7 +56,7 @@ export function NearMeButton({ query, auto = true }: { query: string; auto?: boo
   useEffect(() => {
     if (auto && !autoTried.current) {
       autoTried.current = true;
-      locate();
+      locate(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto]);
@@ -55,12 +65,12 @@ export function NearMeButton({ query, auto = true }: { query: string; auto?: boo
     <div className="space-y-2">
       <button
         type="button"
-        onClick={locate}
+        onClick={() => (found ? router.push(found) : locate())}
         disabled={state === "locating"}
         className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#0E6B5C] px-5 text-sm font-heading font-bold text-white shadow-xs hover:bg-[#0A5347] disabled:opacity-70"
       >
         <span aria-hidden="true">📍</span>
-        {state === "locating" ? "Finding your location…" : "Use my location"}
+        {state === "locating" ? "Finding your location…" : state === "ready" ? "Show clinics closest to me" : "Use my location"}
       </button>
       <p className="text-xs text-[#4B6560]">
         Your browser asks before sharing your location. It&apos;s rounded to about 100 m, used only for this search and the Google Maps lookup, and never saved. Your name and account are never sent to Google.

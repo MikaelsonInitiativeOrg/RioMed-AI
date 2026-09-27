@@ -86,6 +86,13 @@ export default async function Home(props: PageProps<"/">) {
               <HomeComposer initialQuery={q} />
             </div>
 
+            {/* Closest facilities: the browser asks for location on load; nearest first */}
+            <section aria-label="Closest to you" className="w-full max-w-xl mx-auto rounded-2xl border border-[#E3E0D6] bg-white p-4 text-left">
+              <h2 className="font-heading font-bold text-sm text-[#0A5347]">Hospitals, clinics and health centres closest to you</h2>
+              <p className="mt-1 mb-3 text-xs text-[#4B6560]">Allow location and RioMed shows the nearest ones first, anywhere you are.</p>
+              <NearMeButton query="" />
+            </section>
+
             {/* Suggestion Pills */}
             <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg mt-1">
               {SUGGESTIONS.map((s) => (
@@ -264,8 +271,8 @@ export default async function Home(props: PageProps<"/">) {
                         title="No facilities found nearby"
                         description={
                           view.place.name === "your location"
-                            ? "RioMed's partner labs are only in Lagos for now. Places near you from Google Maps are listed below."
-                            : `No listed facility offers this test within 50 km of ${view.place.name}. Try selecting another test or expanding to adjacent Lagos areas.`
+                            ? "No RioMed facility near you yet. Places near you from Google Maps are listed below, and clinics can register on RioMed to take bookings."
+                            : `No RioMed facility offers this near ${view.place.name} yet. Places from Google Maps are listed below.`
                         }
                         actionHref="/?area=Ikeja"
                         actionLabel="Search in Ikeja"

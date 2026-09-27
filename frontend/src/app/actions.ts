@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { BookingError, cancelByPatient, checkIn, holdSlot, uploadResult } from "@riomed/backend/server/booking";
 import { promptBook } from "@riomed/backend/server/promptBook";
+import { parseDeviceOrigin } from "@riomed/backend/server/search";
 import { completePayment, startPayment } from "@riomed/backend/server/payments";
 import { clearSession, forgetDevice, getDeviceUserId, getSessionUser, rememberDevice, setSessionUser } from "@/lib/session";
 import { decideFacilityAccount, loginWithPassword, signUp, unlockWithPin, type AccountResult } from "@riomed/backend/server/accounts";
@@ -135,8 +136,24 @@ export async function signUpAction(_prev: AccountFormState, formData: FormData):
     displayName: formData.get("displayName"),
     type,
     facilityId: formData.get("facilityId"),
+    registration: type === "facility" && formData.get("register") === "new" ? readRegistration(formData) : undefined,
+    origin: parseDeviceOrigin(formData.get("lat"), formData.get("lng")),
   });
   return finishSignIn(r, "/");
+}
+
+function readRegistration(formData: FormData) {
+  const prices: Record<string, unknown> = {};
+  for (const code of formData.getAll("tests")) {
+    if (typeof code === "string") prices[code] = formData.get(`price_${code}`);
+  }
+  return {
+    name: formData.get("facilityName"),
+    type: formData.get("facilityType"),
+    address: formData.get("address"),
+    phone: formData.get("phone"),
+    prices,
+  };
 }
 
 export async function passwordLoginAction(_prev: AccountFormState, formData: FormData): Promise<AccountFormState> {

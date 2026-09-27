@@ -5,6 +5,7 @@ import { resolveWhen, type SearchIntent, type TimeWindow } from "../core/intent"
 import { searchFacilities, type RankedFacility } from "../core/search";
 import { isSlotBookable } from "../core/booking";
 import { prisma } from "./db";
+import { geocodePlace } from "./geocode";
 
 export interface SearchView {
   query: string;
@@ -13,7 +14,7 @@ export interface SearchView {
   intent: SearchIntent;
   place: Place | null;
   window: TimeWindow | null;
-  results: Array<RankedFacility & { type: string; ownership: "public" | "private"; area: string; address: string; phone: string | null; nhfrId: string | null; minPriceKobo: number | null; nextSlot: Date | null }>;
+  results: Array<RankedFacility & { type: string; ownership: "public" | "private"; area: string; address: string; phone: string | null; nhfrId: string | null; source: string; minPriceKobo: number | null; nextSlot: Date | null }>;
   radiusKm: number;
   widened: boolean;
   totalMs: number;
@@ -24,6 +25,9 @@ export type Found = Pick<SearchView, "place" | "window" | "results" | "radiusKm"
 
 /** Device location from the automatic "Use my location" request: rounded to ~100 m, used only for this request. */
 export function parseDeviceOrigin(lat: unknown, lng: unknown): LatLng | null {
+  // Missing or blank is "not shared", never 0,0 (Number("") is 0).
+  if ((typeof lat !== "string" && typeof lat !== "number") || (typeof lng !== "string" && typeof lng !== "number")) return null;
+  if (String(lat).trim() === "" || String(lng).trim() === "") return null;
   const la = Number(lat);
   const ln = Number(lng);
   if (!Number.isFinite(la) || !Number.isFinite(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180) return null;
@@ -31,8 +35,8 @@ export function parseDeviceOrigin(lat: unknown, lng: unknown): LatLng | null {
 }
 
 export async function searchWithIntent(intent: SearchIntent, now = new Date(), deviceOrigin: LatLng | null = null): Promise<Found> {
-  // A typed place wins; the device location is used when the user shared it and typed no known place.
-  const typed = resolveLocation(intent.locationQuery);
+  // A typed place wins (built-in list first, then worldwide geocoding); else the shared device location.
+  const typed = resolveLocation(intent.locationQuery) ?? (intent.locationQuery ? await geocodePlace(intent.locationQuery) : null);
   const place: Place | null = typed ?? (deviceOrigin ? { name: "your location", kind: "area", ...deviceOrigin } : null);
   const window = resolveWhen(intent.when, now);
   if (!place) return { place: null, window, results: [], radiusKm: 0, widened: false };
@@ -78,6 +82,7 @@ export async function searchWithIntent(intent: SearchIntent, now = new Date(), d
       address: f.address,
       phone: f.phone,
       nhfrId: f.nhfrId,
+      source: f.source,
       minPriceKobo: prices.length === intent.tests.length && prices.length > 0 ? prices.reduce((a, b) => a + b, 0) : null,
       nextSlot,
     };

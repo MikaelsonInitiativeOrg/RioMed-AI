@@ -91,24 +91,25 @@ export function SearchRefine({ test, area, day, part, title }: SearchRefineProps
 
         <div>
           <label htmlFor="refine-area" className="mb-1 block text-xs font-semibold text-[#4B6560]">
-            Area in Lagos <span className="text-[#0E6B5C] font-bold">*</span>
+            Area or city <span className="text-[#0E6B5C] font-bold">*</span>
           </label>
-          <select
+          {/* Any place worldwide (geocoded on the server); known Lagos areas are suggested */}
+          <input
             id="refine-area"
             name="area"
-            defaultValue={area ?? ""}
+            list="refine-area-suggestions"
+            defaultValue={area && area !== "your location" ? area : ""}
+            placeholder="e.g. Ikeja, Wuse 2 Abuja, Accra"
+            maxLength={100}
+            autoComplete="address-level2"
             className={selectClasses}
             required
-          >
-            <option value="" disabled>
-              Select area
-            </option>
+          />
+          <datalist id="refine-area-suggestions">
             {PLACES.map((p) => (
-              <option key={p.name} value={p.name}>
-                {p.name}
-              </option>
+              <option key={p.name} value={p.name} />
             ))}
-          </select>
+          </datalist>
         </div>
 
         <div>

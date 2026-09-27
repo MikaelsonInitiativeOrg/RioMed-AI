@@ -69,12 +69,20 @@ export default async function FacilityPage(props: PageProps<"/facility/[id]">) {
 
         <div className="pt-2 border-t border-[#F0EEE7] flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1 rounded-full border border-[#0E6B5C] bg-[#F3FAF8] px-2.5 py-0.5 text-xs font-semibold text-[#0A5347]">
-              ✓ Registry verified
-            </span>
-            <span className="text-xs text-[#8B9490]">
-              NHFR {facility.nhfrId ?? "verified"} · synced {facility.sourceSyncedAt.toISOString().slice(0, 10)}
-            </span>
+            {facility.source === "self_registered" ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#C98A1D]/40 bg-[#FFF4E5] px-2.5 py-0.5 text-xs font-semibold text-[#8A6212]">
+                Self-registered on {facility.sourceSyncedAt.toISOString().slice(0, 10)} · not yet verified
+              </span>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1 rounded-full border border-[#8B9490]/50 bg-[#F7F5F0] px-2.5 py-0.5 text-xs font-semibold text-[#0A5347]">
+                  Registry record (demo)
+                </span>
+                <span className="text-xs text-[#8B9490]">
+                  NHFR record {facility.nhfrId ?? "none"} · demo data
+                </span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

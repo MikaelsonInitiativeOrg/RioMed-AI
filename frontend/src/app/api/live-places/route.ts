@@ -1,6 +1,6 @@
-import { resolveLocation } from "@riomed/backend/core/geo";
 import { findLivePlaces } from "@riomed/backend/server/livePlaces";
 import { parseDeviceOrigin } from "@riomed/backend/server/search";
+import { geocodePlace } from "@riomed/backend/server/geocode";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   const device = parseDeviceOrigin(params.get("lat"), params.get("lng"));
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (!allowed(ip)) return Response.json({ status: "unavailable", places: [], reason: "Too many live searches, try again in a few minutes" }, { status: 429 });
-  const origin = device ?? resolveLocation(address); // device location, else a known area; never guessed
+  const origin = device ?? (await geocodePlace(address)); // device location, else the typed place on the map; never guessed
   const result = await findLivePlaces({ address, origin });
   return Response.json(result, { headers: { "Cache-Control": "no-store" } });
 }

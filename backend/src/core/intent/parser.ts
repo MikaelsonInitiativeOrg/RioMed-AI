@@ -43,6 +43,22 @@ function parseWhen(text: string): When | null {
   return { day, part };
 }
 
+// Words that end a place phrase ("malaria test in Abuja tomorrow morning" -> "Abuja").
+const PLACE_STOP = /\b(?:today|tomorrow|tonight|this|next|on|by|for|at|from|with|please|asap|now|morning|afternoon|evening|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b.*$/i;
+const NOT_PLACES = new Set(["me", "here", "my area", "my location", "the area", "town", "the morning", "the afternoon", "the evening"]);
+
+/** A place outside the built-in list: "in/near/around <place>". The server geocodes it; never guessed here. */
+export function extractPlacePhrase(text: string, opts: { searchContext?: boolean } = {}): string | null {
+  const m = /\b(?:in|near|around|close to)\s+([A-Za-z][A-Za-z0-9 .,'-]{1,60})/i.exec(text);
+  if (!m) return null;
+  const phrase = m[1].replace(PLACE_STOP, "").replace(/[\s,.'-]+$/, "").trim();
+  if (phrase.length < 2 || NOT_PLACES.has(phrase.toLowerCase())) return null;
+  if (/^(?:my|your|his|her|our|their|the|a|an|this|that|pain|children|kids|pregnancy)\b/i.test(phrase)) return null;
+  // Lower-case text only counts in a search context ("clinics in abuja"), not in chat ("tired in general").
+  if (!/^[A-Z]/.test(phrase) && !opts.searchContext) return null;
+  return phrase;
+}
+
 /** Deterministic parser: the offline, mock and timeout fallback (FR-012). Never throws. */
 export function parseDeterministic(text: string): SearchIntent {
   const input = typeof text === "string" ? text.slice(0, 2000) : "";
@@ -51,20 +67,21 @@ export function parseDeterministic(text: string): SearchIntent {
     const place = resolveLocation(input);
     const when = parseWhen(input);
     const facilityType = findPhrases(input, FACILITY_PHRASES)[0]?.value ?? null;
+    const placeText = place?.name ?? extractPlacePhrase(input, { searchContext: tests.length > 0 || !!facilityType });
     const emergency = detectEmergencySafe(input).isEmergency;
 
     const intent: SearchIntent["intent"] = emergency
       ? "emergency"
       : tests.length > 0
         ? "find_test"
-        : facilityType || place
+        : facilityType || placeText
           ? "find_facility"
           : "unsupported";
 
-    const signals = (tests.length > 0 ? 1 : 0) + (place ? 1 : 0) + (when ? 1 : 0);
+    const signals = (tests.length > 0 ? 1 : 0) + (placeText ? 1 : 0) + (when ? 1 : 0);
     const confidence = intent === "unsupported" ? 0.2 : Math.min(0.9, 0.4 + 0.15 * signals);
 
-    return { intent, tests, locationQuery: place?.name ?? null, when, facilityType, confidence };
+    return { intent, tests, locationQuery: placeText, when, facilityType, confidence };
   } catch {
     return { intent: "unsupported", tests: [], locationQuery: null, when: null, facilityType: null, confidence: 0 };
   }

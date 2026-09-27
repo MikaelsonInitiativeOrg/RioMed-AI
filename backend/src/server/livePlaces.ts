@@ -117,7 +117,7 @@ export async function findLivePlaces(
         input: input.origin && !typed && !near
           ? // Device location: search around the exact coordinates, wherever they are.
             `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres closest to latitude ${input.origin.lat}, longitude ${input.origin.lng}. Only medical facilities, nearest first.`
-          : `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres near this location in Nigeria: ${address}. Only medical facilities.`,
+          : `List up to 8 hospitals, clinics, diagnostic laboratories and primary health centres near this location: ${address}. Only medical facilities, nearest first.`,
         tools: [tool],
       }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 25_000), // loads in the background; Maps grounding takes 5–10 s

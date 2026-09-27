@@ -114,9 +114,16 @@ describe("parseDeterministic: location", () => {
     expect(parseDeterministic("fbc in YABA").locationQuery).toBe("Yaba");
     expect(parseDeterministic("scan at victoria island").locationQuery).toBe("Victoria Island");
   });
-  it("is null when no place is known (never guesses)", () => {
+  it("is null when no place is named (never guesses)", () => {
     expect(parseDeterministic("malaria test near me").locationQuery).toBeNull();
-    expect(parseDeterministic("malaria test in Abuja").locationQuery).toBeNull();
+    expect(parseDeterministic("I have pain in my stomach").locationQuery).toBeNull();
+    expect(parseDeterministic("malaria test in the morning").locationQuery).toBeNull();
+  });
+  // Universal location (2026-09-27): a place outside the built-in list is passed on as written; the server geocodes it.
+  it("passes an unknown place through as written", () => {
+    expect(parseDeterministic("malaria test in Abuja").locationQuery).toBe("Abuja");
+    expect(parseDeterministic("hospitals near wuse 2, abuja tomorrow").locationQuery).toBe("wuse 2, abuja");
+    expect(parseDeterministic("clinics around Nairobi").intent).toBe("find_facility");
   });
   it("never contains coordinates", () => {
     const r = parseDeterministic("malaria test at 6.6018, 3.3515");

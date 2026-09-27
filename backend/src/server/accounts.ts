@@ -3,11 +3,16 @@ import { randomBytes, randomUUID, scrypt as scryptCb, timingSafeEqual, type Scry
 import { checkPassword, checkPin, checkUsername, LOCK_MINUTES, MAX_FAILED_ATTEMPTS } from "../core/credentials";
 import { prisma } from "./db";
 import { audit } from "./booking";
+import { buildOpeningSlots, checkFacilityRegistration } from "../core/facilityRegistration";
+import { nearestPlace, type LatLng } from "../core/geo";
+import { geocodeAddress } from "./geocode";
 
 /**
  * Real accounts (added 2026-09-27, product owner request; replaces FR-002 phone OTP for the demo).
- * - Sign-up: username + password + 4–6 digit PIN. Patients are active at once; facility
- *   accounts are "pending" until an operator approves them, and have no facility access until then.
+ * - Sign-up: username + password + 4–6 digit PIN. Patients are active at once.
+ * - Facilities: registering a NEW facility lists it at once, bookable, with the new user as its
+ *   admin (product owner request, 2026-09-27). Joining an EXISTING facility stays "pending" until
+ *   an operator approves it, so nobody can claim to be staff at someone else's clinic.
  * - Sign-in: username + password on a new device. On a remembered device the PIN unlocks.
  * - 5 wrong passwords or PINs lock the account for 15 minutes. Errors never say which part was wrong.
  * - Passwords and PINs are scrypt-hashed with a per-secret salt, and are never logged or sent to the AI.
@@ -52,6 +57,10 @@ export async function signUp(input: {
   displayName: unknown;
   type: "patient" | "facility";
   facilityId?: unknown;
+  /** New facility details (type "facility" without facilityId). prices: ticked testCode -> naira. */
+  registration?: { name: unknown; type: unknown; address: unknown; phone: unknown; prices: Record<string, unknown> };
+  /** Where the facility is, when the person registering shared their location; else the address is geocoded. */
+  origin?: LatLng | null;
 }): Promise<AccountResult> {
   const u = checkUsername(input.username);
   if (!u.ok) return u;
@@ -61,6 +70,8 @@ export async function signUp(input: {
   if (!pin.ok) return pin;
   const name = typeof input.displayName === "string" ? input.displayName.trim().replace(/\s+/g, " ").slice(0, 60) : "";
   if (name.length < 2) return { ok: false, error: "Enter your name (at least 2 characters)." };
+
+  if (input.type === "facility" && input.registration) return registerFacility(u.value, pw.value, pin.value, name, input.registration, input.origin ?? null);
 
   let facilityId: string | null = null;
   if (input.type === "facility") {
@@ -89,6 +100,62 @@ export async function signUp(input: {
   } catch {
     return { ok: false, error: "That username is taken. Try another." };
   }
+}
+
+async function registerFacility(
+  username: string,
+  password: string,
+  pin: string,
+  name: string,
+  raw: NonNullable<Parameters<typeof signUp>[0]["registration"]>,
+  origin: LatLng | null,
+): Promise<AccountResult> {
+  const reg = checkFacilityRegistration(raw);
+  if (!reg.ok) return reg;
+  const f = reg.value;
+  const located = origin ?? (await geocodeAddress(f.address));
+  if (!located) return { ok: false, error: "We couldn't find that address on the map. Add the area, city and country, or use your current location." };
+  const where = { lat: located.lat, lng: located.lng };
+  const area = ("name" in located && typeof located.name === "string" ? located.name : null) ?? nearestPlace(where)?.name ?? f.address.split(",")[0];
+
+  const [passwordHash, pinHash] = await Promise.all([hashSecret(password), hashSecret(pin)]);
+  const facilityId = `fac_${randomUUID().slice(0, 12)}`;
+  const userId = randomUUID();
+  const now = new Date();
+  try {
+    await prisma.$transaction([
+      prisma.facility.create({
+        data: {
+          id: facilityId,
+          nhfrId: null, // not registry-verified; shown as self-registered
+          name: f.name,
+          type: f.type,
+          ownership: "private",
+          address: f.address,
+          area: area.slice(0, 80),
+          lat: where.lat,
+          lng: where.lng,
+          phone: f.phone,
+          operational: true,
+          isPartner: true,
+          source: "self_registered",
+          sourceSyncedAt: now,
+        },
+      }),
+      prisma.facilityTest.createMany({ data: f.tests.map((t) => ({ facilityId, testCode: t.testCode, priceKobo: t.priceKobo, turnaroundHours: 24 })) }),
+      prisma.slot.createMany({ data: buildOpeningSlots(facilityId, f.type, now) }),
+      prisma.user.create({
+        data: { id: userId, username, name, passwordHash, pinHash, role: "facility_admin", facilityId, status: "active" },
+      }),
+    ]);
+  } catch (e) {
+    if ((e as { code?: string })?.code === "P2002") return { ok: false, error: "That username is taken. Try another." };
+    console.error("facility registration failed", (e as Error)?.message?.slice(-400));
+    return { ok: false, error: "Registration didn't go through. Please try again." };
+  }
+  await audit(userId, "account.signup", "User", userId);
+  await audit(userId, "facility.register", "Facility", facilityId);
+  return { ok: true, userId, role: "facility_admin", status: "active" };
 }
 
 type LockableUser = { id: string; lockedUntil: Date | null };

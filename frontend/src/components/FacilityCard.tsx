@@ -46,12 +46,20 @@ export function FacilityCard({ facility: r, testCode, window }: FacilityCardProp
 
       {/* Registry Verification Line */}
       <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-        <span className="inline-flex items-center gap-1 rounded-full border border-[#8B9490]/50 bg-[#F7F5F0] px-2.5 py-0.5 text-xs font-semibold text-[#0A5347]">
-          Registry record (demo)
-        </span>
-        <span className="text-xs text-[#8B9490]">
-          NHFR record {r.nhfrId ?? "none"} · <span className="font-medium text-[#4B6560]">demo data</span>
-        </span>
+        {r.source === "self_registered" ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-[#C98A1D]/40 bg-[#FFF4E5] px-2.5 py-0.5 text-xs font-semibold text-[#8A6212]">
+            Self-registered · not yet verified
+          </span>
+        ) : (
+          <>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#8B9490]/50 bg-[#F7F5F0] px-2.5 py-0.5 text-xs font-semibold text-[#0A5347]">
+              Registry record (demo)
+            </span>
+            <span className="text-xs text-[#8B9490]">
+              NHFR record {r.nhfrId ?? "none"} · <span className="font-medium text-[#4B6560]">demo data</span>
+            </span>
+          </>
+        )}
       </div>
 
       {/* Bottom Action Section */}
